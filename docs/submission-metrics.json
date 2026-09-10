@@ -1,0 +1,95 @@
+{
+  "sources_registered": 60,
+  "source_versions": 63,
+  "active_chunks": 9236,
+  "approved_versions": 0,
+  "original_pdfs": 18,
+  "backend_tests": {
+    "name": "pytest",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "tests": "63",
+    "time": "17.960",
+    "timestamp": "2026-09-06T21:05:20.904956+05:30",
+    "hostname": "Rushabhs-Laptop"
+  },
+  "deployment": {
+    "timestamp": "20260906100140",
+    "health": {
+      "status": "ok",
+      "database": "postgresql",
+      "version": "1.0.0"
+    },
+    "source_version_counts": {
+      "ipsakti": "42",
+      "ipsakti_restore_20260906100140": "42"
+    },
+    "document_checksums_verified": 42,
+    "backup_directory": "data\\backups\\20260906100140",
+    "isolated_restore_database": "ipsakti_restore_20260906100140",
+    "answer_mode": "retrieval",
+    "citation_count": 4,
+    "http_query_ms": 2255.98,
+    "status": "passed",
+    "limitations": [
+      "Database restored into a separate named database; live database untouched.",
+      "Document archive contents read and checked against SHA-256 filenames; full service cutover not performed.",
+      "Restore database and private backups intentionally retained for operator inspection."
+    ]
+  },
+  "evaluation": {
+    "en": {
+      "n": 127,
+      "modes": {
+        "abstention": 10,
+        "retrieval": 117
+      },
+      "citation_resolution": 1.0,
+      "jurisdiction_isolation": 1.0,
+      "literal_integrity": 1.0,
+      "adversarial_n": 4,
+      "safe_abstention": 1.0,
+      "p50_ms": 376.91,
+      "p95_ms": 641.84,
+      "legal_accuracy": null,
+      "citation_support_accuracy": null,
+      "language_quality": null
+    },
+    "hi": {
+      "n": 127,
+      "modes": {
+        "retrieval": 99,
+        "abstention": 28
+      },
+      "citation_resolution": 1.0,
+      "jurisdiction_isolation": 1.0,
+      "literal_integrity": 1.0,
+      "adversarial_n": 4,
+      "safe_abstention": 1.0,
+      "p50_ms": 376.44,
+      "p95_ms": 635.24,
+      "legal_accuracy": null,
+      "citation_support_accuracy": null,
+      "language_quality": null
+    },
+    "mr": {
+      "n": 127,
+      "modes": {
+        "retrieval": 105,
+        "abstention": 22
+      },
+      "citation_resolution": 1.0,
+      "jurisdiction_isolation": 1.0,
+      "literal_integrity": 1.0,
+      "adversarial_n": 4,
+      "safe_abstention": 1.0,
+      "p50_ms": 381.96,
+      "p95_ms": 746.6,
+      "legal_accuracy": null,
+      "citation_support_accuracy": null,
+      "language_quality": null
+    }
+  },
+  "corpus_release": "fa7424d2-0e0f-4304-b1f1-bc60b609ac6f"
+}

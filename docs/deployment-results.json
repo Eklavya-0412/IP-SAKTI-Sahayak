@@ -1,0 +1,24 @@
+{
+  "timestamp": "20260906100140",
+  "health": {
+    "status": "ok",
+    "database": "postgresql",
+    "version": "1.0.0"
+  },
+  "source_version_counts": {
+    "ipsakti": "42",
+    "ipsakti_restore_20260906100140": "42"
+  },
+  "document_checksums_verified": 42,
+  "backup_directory": "data\\backups\\20260906100140",
+  "isolated_restore_database": "ipsakti_restore_20260906100140",
+  "answer_mode": "retrieval",
+  "citation_count": 4,
+  "http_query_ms": 2255.98,
+  "status": "passed",
+  "limitations": [
+    "Database restored into a separate named database; live database untouched.",
+    "Document archive contents read and checked against SHA-256 filenames; full service cutover not performed.",
+    "Restore database and private backups intentionally retained for operator inspection."
+  ]
+}

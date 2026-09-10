@@ -1,0 +1,93 @@
+{
+  "trace_id": "67b35f4f-d372-478d-8e56-1dfe7413ca0e",
+  "mode": "generated",
+  "jurisdiction": "india",
+  "market": "treaties",
+  "language": "en",
+  "answer_language": "en",
+  "heading": "Evidence from your selected jurisdiction",
+  "claims": [
+    {
+      "kind": "explanation",
+      "text": "Under the Drugs and Cosmetics Act, 1940, a 'patent or proprietary medicine' in the Ayurvedic system refers to a statutory classification of formulations containing ingredients from specified authoritative books, rather than meaning that the product holds a patent.",
+      "citation_ids": [
+        "925dc0e4-71da-4bd8-ae47-47179dafd2bd"
+      ],
+      "support_quote": "[(h)] ―patent or proprietary medicine‖ means,— \n \n(i)  in relation to Ayurvedic, Siddha or Unani Tibb systems of medicine all   formulations containing only \nsuch ingredients mentioned in the formulae described in the authoritative books of Ayurveda, Siddha or Unani \nTibb systems of medicine specified in the First Sch edule, but do es not i nclude a medicine which is \nadministered by p arenteral route and also a formulation included in t he authoritative books as specified in \nclause (a);",
+      "verification": "quote-and-entailment-check"
+    },
+    {
+      "kind": "clarification",
+      "text": "To determine if the product fits this classification, are all of its constituent ingredients strictly mentioned in the formulae described in the authoritative books of Ayurveda specified in the First Schedule?",
+      "citation_ids": [
+        "925dc0e4-71da-4bd8-ae47-47179dafd2bd"
+      ],
+      "support_quote": "all   formulations containing only \nsuch ingredients mentioned in the formulae described in the authoritative books of Ayurveda, Siddha or Unani \nTibb systems of medicine specified in the First Sch edule",
+      "verification": "quote-and-entailment-check"
+    },
+    {
+      "kind": "clarification",
+      "text": "To classify the formulation, is the exact product itself already included as a formulation in one of the specified authoritative books, or do the modified proportions and preparation process make it distinct from formulations included in those books?",
+      "citation_ids": [
+        "925dc0e4-71da-4bd8-ae47-47179dafd2bd"
+      ],
+      "support_quote": "and also a formulation included in t he authoritative books as specified in \nclause (a);",
+      "verification": "quote-and-entailment-check"
+    }
+  ],
+  "citations": [
+    {
+      "id": "925dc0e4-71da-4bd8-ae47-47179dafd2bd",
+      "source_id": "drugs-rules",
+      "version_id": "077e5650-964f-4611-b830-0eb7599d560f",
+      "title": "Drugs and Cosmetics Act and Rules (through December 2016)",
+      "publisher": "CDSCO",
+      "url": "https://cdsco.gov.in/opencms/export/sites/CDSCO_WEB/Pdf-documents/Ethics-Committee/Guideline-Document/Drugs_CosmeticsAct1940_Rules1945.pdf#page=8",
+      "locator": "PDF page 8",
+      "page": 8,
+      "excerpt": "Drugs and Cosmetics Act, 1940  \n8 \n \n \n1\n[\n2\n[(h)] ―patent or proprietary medicine‖ means,— \n \n(i)  in relation to Ayurvedic, Siddha or Unani Tibb systems of medicine all   formulations containing only \nsuch ingredients mentioned in the formulae described in the authoritative books of Ayurveda, Siddha or Unani \nTibb systems of medicine specified in the First Sch edule, but do es not i nclude a medicine which is \nadministered by p arenteral route and also a formulation included in t he authoritative books as specified in \nclause (a); \n(ii) in relation to any other systems of medicine, a drug which is a remedy or prescription presented in \na form ready for internal or external administration of human beings or animals and which is not included in \nthe edition  of the Indian Pharmacopoeia for the t ime being or  any other Pharmacopoeia authorised in this \nbehalf by the Central Government after consultation with the Drugs Technical Advisory Board constituted \nunder section 5;] \n \n3\n[\n2\n[(i)] ―prescribed‖ means prescribed by rules made under this Act.] \n \n \n4\n[*  *     *   *    *] \n \n5\n[3A. Construction of references to any law not in force or any functionary not in existence in the \nState of Jammu  and Kashmir.—Any reference in this Act to any law which is not in force, or any \nfunctionary not in existence, in the State of Jammu and Kashmir, shall, in relation to that State, be construed \nas a ref erence to the correspond ing law in force,  or to the  corresponding fu nctionary in e xistence, in  that \nState.] \n",
+      "authority": "legislation",
+      "jurisdiction": "india",
+      "market": "treaties",
+      "retrieved_at": "2026-09-06T09:25:50.635767",
+      "review_status": "reference_only",
+      "stale": false
+    }
+  ],
+  "evidence_status": "partial",
+  "evidence_reasons": [
+    "AI synthesis linked to retrieved passages; entailment checked. Source applicability remains unreviewed."
+  ],
+  "limitations": [
+    "Reference-library material has not been approved as current legal guidance. Check amendments and applicability before relying on it.",
+    "This is an AI synthesis of reference documents, not verified current-law guidance. Confirm applicability and amendments."
+  ],
+  "next_steps": [
+    "Open the cited source and check its version.",
+    "Use the formulation or ABS assessment for product-specific routing.",
+    "Export your case or request facilitator review if uncertainty remains."
+  ],
+  "disclaimer": "Information, not legal advice. Classification is provisional. Confirm requirements with the competent authority or a qualified IP facilitator.",
+  "corpus_release": "fa7424d2-0e0f-4304-b1f1-bc60b609ac6f",
+  "translation": null,
+  "stages": [
+    "Scope and privacy check",
+    "LLM search planning",
+    "Jurisdiction-filtered hybrid retrieval",
+    "Evidence-backed graph lookup",
+    "Claim and citation validation"
+  ],
+  "metrics": {
+    "retrieval": "hybrid",
+    "query_count": 3,
+    "matched": 5,
+    "distinct_sources": 2,
+    "embeddings_enabled": true,
+    "embedding_error": null,
+    "graph_edges": 7,
+    "llm_query_planning": true,
+    "elapsed_ms": 63145,
+    "generation_provider": "gemini",
+    "generation_model": "gemini-3.6-flash"
+  }
+}

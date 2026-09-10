@@ -1,0 +1,5 @@
+# Put a TLS reverse proxy in front of the loopback-only web service.
+# Set APP_ENV=production, COOKIE_SECURE=true and PUBLIC_ORIGIN=https://your-domain.
+your-domain.example {
+    reverse_proxy 127.0.0.1:8080
+}
