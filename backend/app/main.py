@@ -357,11 +357,26 @@ def submit_review(case_id:str,body:ReviewSubmission,user:User=Depends(current_us
     review=ReviewRequest(case_id=case.id,shared_content=shared);db.add(review);db.flush();audit(db,'review.submitted',user.id,review.id,history_shared=body.include_history);db.commit()
     return {'id':review.id,'status':review.status,'assigned_to':None,'message':'Submitted; no facilitator assigned yet.'}
 
+def _review_dict(r):
+    return {'id':r.id,'case_id':r.case_id,'status':r.status,'assigned_to':r.assigned_to,
+        'shared_content':r.shared_content,'response':r.response,
+        'created_at':r.created_at.isoformat(),'updated_at':r.updated_at.isoformat() if r.updated_at else r.created_at.isoformat()}
+
 @app.get(PREFIX+'/reviews')
 def reviews(user:User=Depends(current_user),db:DBSession=Depends(get_db)):
     statement=select(ReviewRequest)
     if user.role not in ('facilitator','admin'):statement=statement.join(Case).where(Case.user_id==user.id)
-    return [{'id':r.id,'case_id':r.case_id,'status':r.status,'assigned_to':r.assigned_to,'shared_content':r.shared_content,'response':r.response} for r in db.scalars(statement)]
+    return [_review_dict(r) for r in db.scalars(statement)]
+
+@app.get(PREFIX+'/reviews/{review_id}')
+def get_review(review_id:str,user:User=Depends(current_user),db:DBSession=Depends(get_db)):
+    review=db.get(ReviewRequest,review_id)
+    if not review:raise HTTPException(404,'Review not found.')
+    # Non-facilitator/admin users can only see their own reviews
+    if user.role not in ('facilitator','admin'):
+        case=db.get(Case,review.case_id)
+        if not case or case.user_id!=user.id:raise HTTPException(404,'Review not found.')
+    return _review_dict(review)
 
 class ReviewUpdate(BaseModel):
     status:Literal['assigned','in_review','resolved']
@@ -373,13 +388,18 @@ def review_update(review_id:str,body:ReviewUpdate,user:User=Depends(roles('facil
     if not review:raise HTTPException(404,'Review not found.')
     if review.assigned_to not in (None,user.id) and user.role!='admin':raise HTTPException(403,'Assigned to another facilitator.')
     allowed={'submitted':['assigned'],'assigned':['in_review'],'in_review':['resolved'],'resolved':[]}
-    if review.status not in allowed or body.status not in allowed[review.status]:
-        raise HTTPException(409,'Invalid review-state transition.')
+    valid_transitions=allowed.get(review.status,[])
+    if body.status not in valid_transitions:
+        raise HTTPException(409,f'Invalid review-state transition: {review.status} → {body.status}. '
+            f'Allowed transitions: {valid_transitions or "none (terminal state)"}.')
     if body.status=='resolved' and len(body.response.strip())<10:raise HTTPException(422,'Provide a substantive review response.')
     review.assigned_to=user.id
     review.status=body.status
     review.response=body.response or review.response
-    audit(db,'review.updated',user.id,review.id,status=body.status);db.commit();return {'ok':True}
+    review.updated_at=now()
+    audit(db,'review.updated',user.id,review.id,status=body.status);db.commit()
+    return _review_dict(review)
+
 
 @app.get(PREFIX+'/consents')
 def list_consents(user:User=Depends(current_user),db:DBSession=Depends(get_db)):
@@ -432,69 +452,283 @@ def language(body:LanguageRequest,session:Session=Depends(current_session),db:DB
     except ProviderUnavailable as error:raise HTTPException(503,str(error))
     audit(db,'language.processed',session.user_id or session.id,task=body.task,consented=body.allow_cloud);db.commit();return result
 
+# ── Prior Art Search with extended mock dataset, fuzzy matching, and compound queries ──
+
+_PRIOR_ART_DB = {
+    'ashwagandha': {
+        'synonyms': ['Withania somnifera', 'winter cherry', 'ashwagandha root', 'Indian ginseng'],
+        'citations': [
+            {'title': 'WO2018/123456 - Withania somnifera extract composition for adaptogenic use', 'patent': 'WO2018/123456', 'score': 0.93, 'match': 'Strong botanical and formulation overlap with withanolide-standardised extract', 'family': 'botanical extract / adaptogen'},
+            {'title': 'IN2020/000123 - Ashwagandha stress-relief tablet formulation with KSM-66', 'patent': 'IN2020/000123', 'score': 0.88, 'match': 'Likely overlap in composition, dosage target, and withanolide concentration', 'family': 'oral tablet / stress relief'},
+            {'title': 'US2021/0102345 - Herbal formulation using Withania somnifera for cognitive enhancement', 'patent': 'US2021/0102345', 'score': 0.82, 'match': 'Similar base extract and nootropic therapeutic claims', 'family': 'herbal nutraceutical'},
+        ],
+        'similarity': [
+            {'label': 'Botanical name match', 'score': 0.97},
+            {'label': 'Traditional-use overlap (Rasayana / adaptogenic)', 'score': 0.89},
+            {'label': 'Formulation similarity (root extract standardisation)', 'score': 0.81},
+        ],
+        'tkdl_references': [
+            {'id': 'TKDL/AY/ASH-001', 'text': 'Ashwagandha (Withania somnifera) — Rasayana use documented in Charaka Samhita, Chikitsa Sthana'},
+            {'id': 'TKDL/AY/ASH-002', 'text': 'Ashwagandha Churna — traditional stress-relief and vitality formulation in Ayurvedic Formulary of India'},
+        ],
+    },
+    'turmeric': {
+        'synonyms': ['Curcuma longa', 'haldi', 'curcumin', 'haridra'],
+        'citations': [
+            {'title': 'US2019/045678 - Curcumin composition for anti-inflammatory use', 'patent': 'US2019/045678', 'score': 0.91, 'match': 'Strong overlap on turmeric species and bioactive curcuminoid component', 'family': 'curcumin composition'},
+            {'title': 'IN2017/007890 - Turmeric extract powder dosage formulation for joint health', 'patent': 'IN2017/007890', 'score': 0.84, 'match': 'Similar plant-part extraction and oral delivery route', 'family': 'oral powder / extract'},
+            {'title': 'EP2016/334455 - Bioavailable curcumin nanoparticle formulation', 'patent': 'EP2016/334455', 'score': 0.79, 'match': 'Novel delivery system for enhanced curcumin absorption', 'family': 'nanoparticle / bioavailability'},
+        ],
+        'similarity': [
+            {'label': 'Species name match', 'score': 0.95},
+            {'label': 'Ingredient overlap (curcuminoids)', 'score': 0.87},
+            {'label': 'Delivery route similarity', 'score': 0.75},
+        ],
+        'tkdl_references': [
+            {'id': 'TKDL/AY/TUR-001', 'text': 'Haridra (Curcuma longa) — wound healing and anti-inflammatory use in Sushruta Samhita'},
+            {'id': 'TKDL/AY/TUR-002', 'text': 'Haridra Khanda — classical formulation for skin disorders in Bhaishajya Ratnavali'},
+        ],
+    },
+    'neem': {
+        'synonyms': ['Azadirachta indica', 'nimba', 'margosa', 'neem leaf', 'nimb'],
+        'citations': [
+            {'title': 'EP1996/436789 - Neem oil composition for pest control (revoked)', 'patent': 'EP1996/436789', 'score': 0.90, 'match': 'Azadirachtin-based formulation; patent revoked on traditional knowledge grounds at EPO', 'family': 'biopesticide / agricultural'},
+            {'title': 'IN2019/004567 - Neem extract oral formulation for blood sugar management', 'patent': 'IN2019/004567', 'score': 0.85, 'match': 'Overlap in neem leaf extract for metabolic health claims', 'family': 'oral extract / metabolic'},
+            {'title': 'US2020/0789012 - Antimicrobial neem bark extract for dental care', 'patent': 'US2020/0789012', 'score': 0.78, 'match': 'Similar antibacterial mechanism using nimbidin compounds', 'family': 'dental / antimicrobial'},
+        ],
+        'similarity': [
+            {'label': 'Botanical name match', 'score': 0.96},
+            {'label': 'Traditional-use overlap (Krimighna / antibacterial)', 'score': 0.91},
+            {'label': 'Formulation similarity', 'score': 0.74},
+        ],
+        'tkdl_references': [
+            {'id': 'TKDL/AY/NIM-001', 'text': 'Nimba (Azadirachta indica) — Krimighna and Kushthaghna properties documented in Charaka Samhita'},
+            {'id': 'TKDL/AY/NIM-002', 'text': 'EP patent on neem fungicidal use opposed and revoked using TKDL evidence (landmark case)'},
+        ],
+    },
+    'tulsi': {
+        'synonyms': ['Ocimum tenuiflorum', 'Ocimum sanctum', 'holy basil', 'tulasi', 'sacred basil'],
+        'citations': [
+            {'title': 'IN2018/002345 - Tulsi extract standardised for ursolic acid content', 'patent': 'IN2018/002345', 'score': 0.87, 'match': 'Overlap in Ocimum sanctum extract with phytochemical standardisation', 'family': 'standardised extract'},
+            {'title': 'WO2020/567890 - Holy basil adaptogenic and immunomodulatory composition', 'patent': 'WO2020/567890', 'score': 0.83, 'match': 'Similar immunomodulatory therapeutic claims using tulsi', 'family': 'adaptogen / immunomodulator'},
+        ],
+        'similarity': [
+            {'label': 'Species name match', 'score': 0.94},
+            {'label': 'Traditional-use overlap (Rasayana / respiratory)', 'score': 0.86},
+            {'label': 'Therapeutic claim similarity', 'score': 0.79},
+        ],
+        'tkdl_references': [
+            {'id': 'TKDL/AY/TUL-001', 'text': 'Tulasi (Ocimum sanctum) — Shwasahara and Kasahara use in Bhavaprakasha Nighantu'},
+        ],
+    },
+    'giloy': {
+        'synonyms': ['Tinospora cordifolia', 'guduchi', 'amrita', 'giloya', 'heart-leaved moonseed'],
+        'citations': [
+            {'title': 'IN2021/005678 - Guduchi extract tablet for immunomodulation', 'patent': 'IN2021/005678', 'score': 0.86, 'match': 'Overlap in Tinospora cordifolia stem extract for immune support', 'family': 'immunomodulator / oral tablet'},
+            {'title': 'WO2019/890123 - Tinospora-based composition for fever management', 'patent': 'WO2019/890123', 'score': 0.81, 'match': 'Similar Jwarahara (antipyretic) claim using guduchi', 'family': 'antipyretic / herbal'},
+        ],
+        'similarity': [
+            {'label': 'Botanical name match', 'score': 0.95},
+            {'label': 'Traditional-use overlap (Rasayana / Jwarahara)', 'score': 0.88},
+            {'label': 'Formulation similarity', 'score': 0.76},
+        ],
+        'tkdl_references': [
+            {'id': 'TKDL/AY/GUD-001', 'text': 'Guduchi (Tinospora cordifolia) — Rasayana and Jwarahara use documented in Charaka Samhita and Ashtanga Hridaya'},
+        ],
+    },
+    'shatavari': {
+        'synonyms': ['Asparagus racemosus', 'shatavari root', 'satavar', 'wild asparagus'],
+        'citations': [
+            {'title': 'IN2020/006789 - Shatavari root extract for lactation support', 'patent': 'IN2020/006789', 'score': 0.85, 'match': 'Overlap in galactagogue claims using Asparagus racemosus saponins', 'family': 'galactagogue / women health'},
+            {'title': 'US2022/0234567 - Asparagus racemosus adaptogenic formulation for hormonal balance', 'patent': 'US2022/0234567', 'score': 0.80, 'match': 'Similar phytoestrogenic and adaptogenic claims', 'family': 'adaptogen / hormonal'},
+        ],
+        'similarity': [
+            {'label': 'Botanical name match', 'score': 0.96},
+            {'label': 'Traditional-use overlap (Stanya-janana / galactagogue)', 'score': 0.87},
+            {'label': 'Formulation similarity', 'score': 0.73},
+        ],
+        'tkdl_references': [
+            {'id': 'TKDL/AY/SHA-001', 'text': 'Shatavari (Asparagus racemosus) — Stanya-janana and Balya use documented in Dhanvantari Nighantu'},
+        ],
+    },
+    'brahmi': {
+        'synonyms': ['Bacopa monnieri', 'water hyssop', 'brahmi leaf', 'Centella asiatica', 'gotu kola', 'mandukaparni'],
+        'citations': [
+            {'title': 'US2018/0345678 - Bacopa monnieri extract standardised for bacosides', 'patent': 'US2018/0345678', 'score': 0.89, 'match': 'Strong overlap in nootropic claims and bacoside standardisation', 'family': 'nootropic / cognitive'},
+            {'title': 'IN2019/007890 - Brahmi-based memory enhancement syrup formulation', 'patent': 'IN2019/007890', 'score': 0.84, 'match': 'Similar Medhya Rasayana claims in oral liquid format', 'family': 'syrup / cognitive enhancement'},
+            {'title': 'EP2021/112233 - Centella asiatica triterpene extract for neuroprotection', 'patent': 'EP2021/112233', 'score': 0.77, 'match': 'Related botanical (Mandukaparni) with overlapping CNS claims', 'family': 'neuroprotective'},
+        ],
+        'similarity': [
+            {'label': 'Botanical name match', 'score': 0.93},
+            {'label': 'Traditional-use overlap (Medhya Rasayana / cognitive)', 'score': 0.90},
+            {'label': 'Formulation similarity (bacoside standardisation)', 'score': 0.82},
+        ],
+        'tkdl_references': [
+            {'id': 'TKDL/AY/BRA-001', 'text': 'Brahmi (Bacopa monnieri) — Medhya Rasayana use in Charaka Samhita, Chikitsa Sthana Ch.1'},
+            {'id': 'TKDL/AY/BRA-002', 'text': 'Brahmi Ghrita — classical formulation for intellect enhancement in Ashtanga Hridaya'},
+        ],
+    },
+    'triphala': {
+        'synonyms': ['triphala churna', 'three fruits', 'amalaki haritaki bibhitaki', 'Emblica Terminalia'],
+        'citations': [
+            {'title': 'IN2017/008901 - Triphala formulation with enhanced bioavailability', 'patent': 'IN2017/008901', 'score': 0.86, 'match': 'Overlap in classical three-fruit combination with modified delivery', 'family': 'digestive / antioxidant'},
+            {'title': 'WO2021/445566 - Triphala-based oral care composition', 'patent': 'WO2021/445566', 'score': 0.80, 'match': 'Similar antimicrobial application of triphala tannins', 'family': 'oral care / antimicrobial'},
+        ],
+        'similarity': [
+            {'label': 'Formulation name match', 'score': 0.97},
+            {'label': 'Traditional-use overlap (Tridoshahara / digestive)', 'score': 0.91},
+            {'label': 'Ingredient composition match', 'score': 0.88},
+        ],
+        'tkdl_references': [
+            {'id': 'TKDL/AY/TRI-001', 'text': 'Triphala — classical Tridoshahara formulation (Amalaki + Haritaki + Bibhitaki) in Charaka Samhita and Sushruta Samhita'},
+        ],
+    },
+    'guggulu': {
+        'synonyms': ['Commiphora wightii', 'guggul', 'Indian bdellium', 'mukul myrrh', 'guggulipid'],
+        'citations': [
+            {'title': 'US2003/0012345 - Guggulsterone composition for cholesterol management', 'patent': 'US2003/0012345', 'score': 0.88, 'match': 'Strong overlap in guggulsterone E/Z isomers for lipid-lowering claims', 'family': 'lipid-lowering / cardiovascular'},
+            {'title': 'IN2018/009012 - Yograj Guggulu tablet with standardised extract', 'patent': 'IN2018/009012', 'score': 0.83, 'match': 'Classical Yograj Guggulu formulation with modern tablet technology', 'family': 'anti-inflammatory / classical'},
+            {'title': 'WO2020/778899 - Guggul resin fraction for anti-arthritic application', 'patent': 'WO2020/778899', 'score': 0.79, 'match': 'Related oleoresin extraction with joint-health claims', 'family': 'anti-arthritic / botanical'},
+        ],
+        'similarity': [
+            {'label': 'Botanical name match', 'score': 0.94},
+            {'label': 'Traditional-use overlap (Medohara / lipid-lowering)', 'score': 0.89},
+            {'label': 'Active compound match (guggulsterones)', 'score': 0.85},
+        ],
+        'tkdl_references': [
+            {'id': 'TKDL/AY/GUG-001', 'text': 'Guggulu (Commiphora wightii) — Medohara and Vatahara properties in Sushruta Samhita'},
+            {'id': 'TKDL/AY/GUG-002', 'text': 'Yograj Guggulu — classical anti-inflammatory formulation in Bhaishajya Ratnavali'},
+        ],
+    },
+    'amla': {
+        'synonyms': ['Phyllanthus emblica', 'Emblica officinalis', 'amalaki', 'Indian gooseberry', 'amala'],
+        'citations': [
+            {'title': 'IN2019/010123 - Amla extract standardised for vitamin C and tannins', 'patent': 'IN2019/010123', 'score': 0.87, 'match': 'Overlap in Phyllanthus emblica fruit extract standardisation for antioxidant use', 'family': 'antioxidant / vitamin C'},
+            {'title': 'US2021/0456789 - Amalaki-based anti-ageing topical composition', 'patent': 'US2021/0456789', 'score': 0.82, 'match': 'Similar polyphenol-rich extract for dermatological anti-ageing claims', 'family': 'topical / anti-ageing'},
+        ],
+        'similarity': [
+            {'label': 'Botanical name match', 'score': 0.96},
+            {'label': 'Traditional-use overlap (Rasayana / Vayasthapana)', 'score': 0.88},
+            {'label': 'Phytochemical profile similarity', 'score': 0.80},
+        ],
+        'tkdl_references': [
+            {'id': 'TKDL/AY/AML-001', 'text': 'Amalaki (Phyllanthus emblica) — Rasayana and Vayasthapana use documented in Charaka Samhita'},
+            {'id': 'TKDL/AY/AML-002', 'text': 'Chyawanprash — classical Rasayana formulation with Amalaki as primary ingredient in Charaka Samhita'},
+        ],
+    },
+}
+
+# Build reverse lookup for fuzzy matching: all synonyms and alternate names
+_PRIOR_ART_ALIASES = {}
+for _key, _data in _PRIOR_ART_DB.items():
+    _PRIOR_ART_ALIASES[_key] = _key
+    for _syn in _data['synonyms']:
+        _PRIOR_ART_ALIASES[_syn.lower()] = _key
+
+
+def _fuzzy_match_herb(term):
+    """Try exact match first, then fuzzy match against known herb names and synonyms."""
+    import difflib
+    normalized = term.strip().lower()
+    # Exact match on key or synonym
+    if normalized in _PRIOR_ART_ALIASES:
+        return _PRIOR_ART_DB[_PRIOR_ART_ALIASES[normalized]]
+    # Fuzzy match
+    candidates = list(_PRIOR_ART_ALIASES.keys())
+    matches = difflib.get_close_matches(normalized, candidates, n=1, cutoff=0.6)
+    if matches:
+        return _PRIOR_ART_DB[_PRIOR_ART_ALIASES[matches[0]]]
+    return None
+
+
 @app.get(PREFIX+'/prior-art')
 def prior_art(term:str=Query(min_length=2,max_length=150)):
     normalized = term.strip().lower()
-    mock = {
-        'ashwagandha': {
-            'synonyms': ['Withania somnifera', 'winter cherry', 'ashwagandha root'],
+    # Detect compound/multi-ingredient queries
+    parts = re.split(r'[+,&]|\band\b|\s+and\s+', normalized)
+    parts = [p.strip() for p in parts if len(p.strip()) >= 2]
+
+    if len(parts) > 1:
+        # Compound query: merge results from multiple herbs
+        all_citations = []
+        all_similarity = []
+        all_synonyms = []
+        all_tkdl = []
+        matched_names = []
+        for part in parts[:4]:  # limit to 4 ingredients
+            entry = _fuzzy_match_herb(part)
+            if entry:
+                matched_names.append(part)
+                all_citations.extend(entry['citations'])
+                all_similarity.extend(entry['similarity'])
+                all_synonyms.extend(entry['synonyms'])
+                all_tkdl.extend(entry.get('tkdl_references', []))
+        if not all_citations:
+            # None of the parts matched, fall through to single-term logic
+            entry = None
+        else:
+            # De-duplicate citations by patent number
+            seen_patents = set()
+            unique_citations = []
+            for c in all_citations:
+                if c['patent'] not in seen_patents:
+                    seen_patents.add(c['patent'])
+                    unique_citations.append(c)
+            entry = {
+                'synonyms': list(dict.fromkeys(all_synonyms)),
+                'citations': unique_citations[:8],
+                'similarity': [
+                    {'label': f'Compound formulation overlap ({" + ".join(matched_names)})', 'score': 0.85},
+                    {'label': 'Individual ingredient match (averaged)', 'score': round(sum(s['score'] for s in all_similarity) / max(len(all_similarity), 1), 2)},
+                    {'label': 'Synergistic combination novelty risk', 'score': 0.70},
+                ],
+                'tkdl_references': list({r['id']: r for r in all_tkdl}.values()),
+            }
+    else:
+        entry = _fuzzy_match_herb(normalized)
+
+    if entry is None:
+        entry = {
+            'synonyms': [term],
             'citations': [
-                {'title': 'WO2018/123456 - Withania somnifera extract composition', 'patent': 'WO2018/123456', 'score': 0.93, 'match': 'Strong botanical and formulation overlap', 'family': 'botanical extract / adaptogen'},
-                {'title': 'IN2020/000123 - Ashwagandha stress-relief tablet formulation', 'patent': 'IN2020/000123', 'score': 0.88, 'match': 'Likely overlap in composition and dosage target', 'family': 'oral tablet / stress relief'},
-                {'title': 'US2021/0102345 - Herbal formulation using Withania somnifera', 'patent': 'US2021/0102345', 'score': 0.82, 'match': 'Similar base extract and therapeutic claims', 'family': 'herbal nutraceutical'}
+                {'title': f'{term.title()} — general concept-level prior art search', 'patent': 'SEARCH-REQUIRED', 'score': 0.72,
+                 'match': 'No pre-indexed data available for this term. Perform a full prior art search using the links below.', 'family': 'concept review'},
             ],
             'similarity': [
-                {'label': 'Botanical name match', 'score': 0.97},
-                {'label': 'Traditional-use overlap', 'score': 0.89},
-                {'label': 'Formulation similarity', 'score': 0.81},
+                {'label': 'Keyword overlap', 'score': 0.70},
+                {'label': 'Botanical/ingredient plausibility', 'score': 0.64},
+                {'label': 'Therapeutic route similarity', 'score': 0.58},
             ],
-        },
-        'turmeric': {
-            'synonyms': ['Curcuma longa', 'haldi', 'curcumin'],
-            'citations': [
-                {'title': 'US2019/045678 - Curcumin composition for anti-inflammatory use', 'patent': 'US2019/045678', 'score': 0.91, 'match': 'Strong overlap on turmeric species and bioactive component', 'family': 'curcumin composition'},
-                {'title': 'IN2017/007890 - Turmeric extract powder dosage formulation', 'patent': 'IN2017/007890', 'score': 0.84, 'match': 'Similar plant-part extraction and delivery route', 'family': 'oral powder / extract'}
-            ],
-            'similarity': [
-                {'label': 'Species name match', 'score': 0.95},
-                {'label': 'Ingredient overlap', 'score': 0.87},
-                {'label': 'Delivery route similarity', 'score': 0.75},
-            ],
-        },
-    }
-    entry = mock.get(normalized, {
-        'synonyms': [term],
-        'citations': [
-            {'title': f'{term.title()} formulation prior art placeholder', 'patent': 'UNKNOWN-EXAMPLE', 'score': 0.72, 'match': 'General concept-level overlap; verify exact botanical identity and claims', 'family': 'concept review'},
-        ],
-        'similarity': [
-            {'label': 'Keyword overlap', 'score': 0.7},
-            {'label': 'Botanical/ingredient plausibility', 'score': 0.64},
-            {'label': 'Therapeutic route similarity', 'score': 0.58},
-        ],
-    })
+            'tkdl_references': [],
+        }
     words = [term] + entry['synonyms']
     return {
         'term': term,
-        'terms': list(dict.fromkeys(words))[:8],
+        'terms': list(dict.fromkeys(words))[:10],
         'queries': [
             ' OR '.join('"' + w.replace('"', '') + '"' for w in words),
             '(' + ' OR '.join(words) + ') AND (extract OR composition OR formulation OR traditional medicine)',
-            '(' + ' OR '.join(words) + ') AND (oral OR tablet OR capsule OR syrup)'
+            '(' + ' OR '.join(words) + ') AND (oral OR tablet OR capsule OR syrup)',
+            '(' + ' OR '.join(words) + ') AND (patent OR intellectual property OR prior art OR TKDL)',
         ],
         'citations': entry['citations'],
         'similarity_breakdown': entry['similarity'],
+        'tkdl_references': entry.get('tkdl_references', []),
         'links': [
             {'title': 'IP India: Patent search entry point', 'url': 'https://ipindia.gov.in/'},
             {'title': 'WIPO PATENTSCOPE', 'url': 'https://patentscope.wipo.int/'},
-            {'title': 'TKDL: public information and access', 'url': 'https://www.tkdl.res.in/'}
+            {'title': 'TKDL: public information and access', 'url': 'https://www.tkdl.res.in/'},
+            {'title': 'Google Patents', 'url': 'https://patents.google.com/'},
+            {'title': 'Espacenet (EPO)', 'url': 'https://worldwide.espacenet.com/'},
         ],
         'limitations': [
-            'These citations are a demonstration fallback and must be confirmed against the actual registry before reliance.',
-            'Synonyms are search aids; verify exact botanical identity and claimed composition.',
-            'A match is not a patentability opinion or freedom-to-operate clearance.',
-            'Restricted databases require authorized access and formal search review.'
-        ]
+            'These citations are a demonstration dataset and must be confirmed against actual patent registries before reliance.',
+            'Synonyms are search aids; verify exact botanical identity (genus, species, variety) and claimed composition.',
+            'A prior art match is not a patentability opinion, freedom-to-operate clearance, or infringement assessment.',
+            'Similarity scores are illustrative and do not represent actual claim-by-claim comparison.',
+            'Restricted databases (TKDL full-text, commercial patent databases) require authorised access and formal search review.',
+            'For definitive prior art searches, engage a registered patent agent or use IP India / WIPO official search services.',
+        ],
     }
 
 class FeedbackInput(BaseModel):

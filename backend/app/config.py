@@ -49,8 +49,8 @@ class Settings(BaseSettings):
     gemini_model: str = 'gemini-3.6-flash'
     generation_temperature: float = 0.5
     generation_timeout_seconds: int = 90
-    max_completion_tokens: int = 8192
-    max_context_tokens: int = 30000
+    max_completion_tokens: int = 12288
+    max_context_tokens: int = 40000
 
     # ── Ingestion (LlamaParse) ────────────────────────────────────────────────
     llama_cloud_api_key: str = ''

@@ -55,6 +55,10 @@ def _build_engine():
         pool_pre_ping=True,
         pool_size=5,
         max_overflow=10,
+        # Supabase uses PgBouncer in transaction-pooling mode, which does not
+        # support server-side prepared statements.  Disable psycopg's automatic
+        # prepared-statement caching to avoid "prepared statement does not exist" errors.
+        connect_args={'prepare_threshold': None},
     )
 
 

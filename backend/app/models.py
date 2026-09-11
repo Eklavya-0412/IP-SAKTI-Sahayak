@@ -142,6 +142,7 @@ class ReviewRequest(Base):
     assigned_to: Mapped[str | None] = mapped_column(ForeignKey('users.id', ondelete='SET NULL'))
     response: Mapped[str] = mapped_column(Text, default='')
     created_at: Mapped[datetime] = mapped_column(DateTime, default=now)
+    updated_at: Mapped[datetime | None] = mapped_column(DateTime)
 
 class Consent(Base):
     __tablename__ = 'consents'
