@@ -1,0 +1,104 @@
+{
+  "mode": "offline SQLite, lexical retrieval, actual extracted PDFs",
+  "results": [
+    {
+      "jurisdiction": "india",
+      "market": "treaties",
+      "source_ids": [
+        "ayush-guidelines",
+        "biodiversity-act",
+        "patent-examination",
+        "patents-act",
+        "patents-manual",
+        "pharma-guidelines",
+        "tk-patents"
+      ],
+      "missing_expected_sources": [],
+      "scope_isolated": true,
+      "metrics": {
+        "retrieval": "lexical",
+        "query_count": 3,
+        "matched": 8,
+        "distinct_sources": 7,
+        "embeddings_enabled": false,
+        "embedding_error": null
+      },
+      "evidence": [
+        {
+          "source_id": "patents-manual",
+          "locator": "Page 98",
+          "excerpt": "Designs Act, 2000, three-dimensional configuration of the electronic \ncircuits used in microchips and semiconductor chips is not patentable. \nSection 3(o) \n09.03.05.15 An invention which in effect, is traditional knowledge or which \nis an aggregation or duplication of known properties of \ntraditionally known component or components is not an \ninvention. \nTraditional Knowledge, be ing knowledge already existing, is not \npatentable. An example is the antiseptic properties of turmeric for \nwound healing. Another example is the pesticidal and insecticidal \nproperties of neem. \nThe Examiner conducts investigation by using Traditional Knowle dge \nSection 3(p)"
+        },
+        {
+          "source_id": "patent-examination",
+          "locator": "Page 53",
+          "excerpt": "antiseptic property of turmeric for wound healing.  Another example is the pesticidal and \ninsecticidal properties of neem. \nAccording to Section 3 (p) of the Act, an invention which, in effect, is traditional knowledge or \nwhich is an aggregation or duplication of known properties of traditionally known component \nor components is not a patentable subject matter. For the examination of TK related subject \nmatters, separate guidelines have already been issued by the Office of CGPDTM. \nILLUSTRATIVE EXAMPLES:  \nClaim: Serum of pigeon possessing the anti-paralysis activity.  \nAnalysis: The use of pigeon serum for the treatment of paralysis (as it possess anti- paralytic \nactivity) is a traditional knowledge in India or is an aggregation or duplication of known \nproperties of traditionally known component. It is clearly evident from D1 (Mahawar et al., \n\u201cAnimals and their products utilized as medicines by the inhabitants surrounding the Analysis: \nThe use of pigeon serum for the treatment of paralysis (as it possess anti-paralytic activity) is a"
+        },
+        {
+          "source_id": "ayush-guidelines",
+          "locator": "Page 14",
+          "excerpt": "Page 10 of 14 \n \nGuiding \nPrinciple 5 \nIn case a multi -ingredient formulation is known to have a specific \ntherapeutic activity as per the prior art, merely selecting one or more \ningredient for the same said therapeutic activity cannot be considered \nas inventive. \nIllustration 1:  The claims relate to an extract of Zingiber zerumbet  (bitter ginger) for \ninflammation and also for allergic disorder like Asthma. \nPrior art:  Discloses use of Zingiber zerumbet  (bitter ginger) along with few other \ningredients for the treatment of inflammation and Asthma in Unani system of medicine.  \nAnalysis: The claims of alleged invention relate to an extract of Zingiber zerumbet. As per \nthe prior art disclosure, the multi -component formulation comprising Zingiber zerumbet  \nhas the same therapeutic activity (i.e. anti -bronchial asthmatic), and therefore it is obvious \nthat one single component namely Zingiber zerumbet taken out of them would have the \nsame therapeutic activity. Hence, the person skilled in the art would have b een motivated \nto arrive at the invention and thus, the claims of alleged invention can   be objected for \nlacking inventive step. \nGuiding \nPrinciple 6 \nIf the subject matter of the claims relates to inventions regarding \nequipment / device used for known proce dure in Ayush systems or \nrelated fields, then such inventions may be patentable if the claims \nqualify the patentability criteria as per the provisions of the Act."
+        },
+        {
+          "source_id": "biodiversity-act",
+          "locator": "Page 7",
+          "excerpt": "approval of the National Biodiversity Authority before grant of such intellectual property rights. \n(1A) Any person covered under section 7 applying for any intellectual property right, by whatever \nname called, in or outside India, for any invention based on any research or information on a biological \nresource which is accessed from India, including those depos ited in repositories outside India, or \ntraditional knowledge associated thereto, shall register with the National Biodiversity Authority before \ngrant of such intellectual property rights. \n(1B) Any person covered under section 7 who has obtained intellectua l property right, by whatever \nname called, in or outside India, for any invention based on any research or information on a biological \nresource which is accessed from India, including those deposited in repositories outside India, or \ntraditional knowledge associated thereto, shall obtain prior approval of the National Biodiversity \nAuthority at the time of commercialisation.] \n(2) The National Biodiversity Authority may, while granting the approval  under this section, impose \nbenefit sharing fee or royalty or both or  impose conditions including the sharing of financial benefits \narising out of the commercial utilisation of such rights. \n(3) The provisions of this section shall not apply to any person making an  application for any right \nunder any law relating to protection of plant varieties 2***."
+        },
+        {
+          "source_id": "pharma-guidelines",
+          "locator": "Page 15",
+          "excerpt": "D1 does not mention expressis verbis that this pharmaceutical formulation is  a \nsubstantially clear aqueous solution which has a viscosity of less than 10 mPa.s and \nthat the concentration in the formulation of ions of metals of groups IA, IB, IIB and IVB"
+        },
+        {
+          "source_id": "tk-patents",
+          "locator": "Page 2",
+          "excerpt": "hence, not patentable. The Indian Patents Act also has a unique provision under Section 3 (p), \nwherein \"an invention which, in effect, is traditional knowledge or which is an aggregation or \nduplication of known properties of traditionally known component or components\" is not an \ninvention and h ence, not patentable, within the meaning of the Patents Act. Additionally, \nsections 3 (b), (c), (d), (f), (h), (i) and (j) are of relevance with respect to the patent applications \nrelated to TK and/or biological material. \n4. On the issue of Biological resourc es, section 6 (1) of the Biological Diversity Act, 2002 \nprovides very clearly that \"no person shall apply for any intellectual property right, by \nwhatever name called, in or outside India for any invention based on any research or"
+        },
+        {
+          "source_id": "patents-act",
+          "locator": "Page 10",
+          "excerpt": "10 \n(e) a substance obtained by a mere admixture resulting only in the aggregation of the properties \nof the components thereof or a process for producing such substance; \n(f) the mere arrangement or re -arrangement or duplication of known devices each functioning \nindependently of one another in a known way; \n1*   *   *   *            * \n(h) a method of agriculture or horticulture; \n(i) any process for the medicinal, surgical, curative, prophylactic 2[diagnostic, therape utic] or \nother treatment of human beings or any process for a similar treatment of animals 3*** to render them \nfree of disease or to increase their economic value or that of their products. \n2[(j) plants and animals in whole or any part thereof other than m icro-organisms but including \nseeds, varieties and species and essentially biological processes for production or propagation of \nplants and animals; \n(k) a mathematical or business method or a computer programme per se or algorithms; \n(l) a literary, dramatic , musical or artistic work or any other aesthetic creation whatsoever \nincluding cinematographic works and television productions; \n(m) a mere scheme or rule or method of performing mental act or method of playing game; \n(n) a presentation of information; \n(o) topography of integrated circuits; \n(p) an invention which, in effect, is traditional knowledge or which is an aggregation or \nduplication of known properties of traditionally known component or components.]"
+        },
+        {
+          "source_id": "patent-examination",
+          "locator": "Page 53",
+          "excerpt": "Page 53 of 115 \n \nAny manner, means or method of expressing information whether visual, audible or tangible \nby words, codes, signals, symbols, diagrams or any other mode of representation is not \npatentable. For example, a speech instruction means in the form of printed text where \nhorizontal underlining indicated stress and vertical separating lines divided the works into \nrhythmic groups is held not patentable.   \n \nIn the matter of application No. 94 /Cal/2002, the Controller held, that patent system was  \nmeant for protecting only one kind of creativity , i.e., technological creativity and since the \nclaimed invention related to business method and method of presenting information, it was \nnot allowed. \n3(o) Topography of integrated circuits. \nProtection of Layout Designs of Integrated Circuits is governed separately under the \nSemiconductor Integrated Circuit Lay -out Designs Act, 2000.  Three-dimensional configuration \nof the electronic circuits used in microchips and semiconductor chips is not patentable. \n3(p) An invention which in effect, is traditional knowledge or which is an aggregation or \nduplication of known properties of traditionally known component or components. \nTraditional Knowledge, being knowledge already existing, is not patentable. An example is the \nantiseptic property of turmeric for wound healing.  Another example is the pesticidal and \ninsecticidal properties of neem."
+        }
+      ]
+    },
+    {
+      "jurisdiction": "international",
+      "market": "us",
+      "source_ids": [
+        "us-botanical"
+      ],
+      "missing_expected_sources": [],
+      "scope_isolated": true,
+      "metrics": {
+        "retrieval": "lexical",
+        "query_count": 1,
+        "matched": 3,
+        "distinct_sources": 1,
+        "embeddings_enabled": false,
+        "embedding_error": null
+      },
+      "evidence": [
+        {
+          "source_id": "us-botanical",
+          "locator": "Page 31",
+          "excerpt": "material in the application and should not rely solely on quality control of the finished product \nfor a botanical drug product. The manufacturing of botanical drug substance should be in \ncompliance with current good manufacturing practices (CGMPs). In some cases, compliance \nwith both GACP and CGMPs may be warranted to cover the way in which the botanical raw \nmaterial is grown, collected, processed, and stored. The applicant should designate and document \nthe rationale for the point at which production of the drug substance begins and is encouraged to \ncontact the appropriate review division in the Office of Pharmaceutical Quality to reach \nagreement on this aspect. \n \nj. Environmental assessment \n \nEnvironmental assessment (EA) requirements for NDA approval are described in 21 CFR \u00a7\u00a7 \n25.30, 25.31, and 25.40. The Agency regards the submission of an NDA for a drug derived from \nplants taken from the wild as an extraordinary circumstance requiring the submission of an EA.40  \n                                                 \n39 If a drug substance submitted to the USAN Council for naming is closely related to a compendial article (i.e., \nUSP/National Formulary (NF)), compliant with the current USP/NF monograph, or purified to a different extent than \nrequired in the monograph, the USAN Council has three basic options in naming the substance: \n1) Vote \u201cNo USAN,\u201d stating that the substance is already compendial and has a compendial name;"
+        },
+        {
+          "source_id": "us-botanical",
+          "locator": "Page 32",
+          "excerpt": "Contains Nonbinding Recommendations \n 28 \n  \nC. Nonclinical Safety Assessment \n \nPharmacology and toxicology requirements for an NDA for a botanical drug are anticipated to be \nthe same as those for a nonbotanical drug. Standard guidance documents are available on the \nFDA Drugs guidance web page.41 The applicant should work closely with the Agency on all \nregulatory issues relating to pharmacology and toxicology studies needed during the IND \nprocess. Possible exceptions to normal drug development recommendations should have been \ninitially discussed with the Agency by the end of Phase 2, and general agreements should be \nreached by the end of Phase 3 studies and captured in pre-NDA meeting minutes in accordance \nwith PDUFA V performance goals. \n \nD. Clinical Pharmacology \n \nThe general requirements for in vivo bioavailability data in an NDA (described in \u00a7 320.21) are \napplicable to botanical drugs (see Sections V.D and VI.E). The type of bioavailability study that \nis appropriate for a specific botanical drug product is based on the following: (1) information on \nthe active constituents, if known; (2) the complexity of the drug substance; and (3) the \navailability of sensitive analytical methods. Because there could likely be more than one \nchemical constituent in a botanical drug or the active constituents may not be identified, standard \nin vivo bioavailability and pharmacokinetic studies that measure the blood or urine concentration"
+        },
+        {
+          "source_id": "us-botanical",
+          "locator": "Page 8",
+          "excerpt": "Contains Nonbinding Recommendations \n 4 \nshould contact the Division of Nonprescription Drug Products in CDER\u2019s Office of New \nDrugs/Office of Drug Evaluation IV for additional information about the OTC drug monograph \napproach to marketing a botanical drug. \n \nB. Marketing of Botanical Drugs Under NDAs \n \nAny person who wishes to market a new drug in the United States must submit an NDA and \nobtain Agency approval prior to marketing the new drug product for the proposed use (see \nsections 201(p) and 505 of the FD&C Act). FDA may approve a drug product containing such a \ndrug substance for OTC sale pursuant to an application submitted under section 505 of the \nFD&C Act. Accordingly, an applicant could seek marketing approval for a botanical drug under \nsection 505 of the FD&C Act for either prescription or OTC use.10   \n \nBecause of the heterogeneous nature of a botanical drug and possible uncertainty about its active \nconstituents, one of the critical issues for botanical drugs is ensuring that the therapeutic effect \nfor marketed drug product batches is consistent. In general, therapeutic consistency can be \nsupported by a \u201ctotality of the evidence\u201d approach, including the following considerations: \n \n\u2022 Botanical raw material control (e.g., agricultural practice and collection). \n \n\u2022 Quality control by chemical test(s) (e.g., analytical tests such as spectroscopic and/or \nchromatographic methods that capture the active or chemical constituents of a botanical"
+        }
+      ]
+    }
+  ]
+}

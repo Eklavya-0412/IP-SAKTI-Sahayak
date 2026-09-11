@@ -1,0 +1,176 @@
+{
+  "question": "Can a traditional Ayurvedic formulation be patented in India? Explain how traditional knowledge differs from a genuinely new invention.",
+  "provider_calls": [
+    {
+      "stage": "plan",
+      "elapsed_seconds": 15.5,
+      "claims": 0,
+      "supported": null
+    },
+    {
+      "stage": "draft",
+      "elapsed_seconds": 48.11,
+      "claims": 4,
+      "supported": null
+    },
+    {
+      "stage": "verify",
+      "elapsed_seconds": 2.21,
+      "claims": 0,
+      "supported": [
+        0,
+        1,
+        2
+      ]
+    }
+  ],
+  "answer": {
+    "trace_id": "33736dd6-6aa9-4f9c-be9e-f5a763a4dcc4",
+    "mode": "generated",
+    "jurisdiction": "india",
+    "market": "treaties",
+    "language": "en",
+    "answer_language": "en",
+    "heading": "Evidence from your selected jurisdiction",
+    "claims": [
+      {
+        "text": "A traditional Ayurvedic formulation that is in effect traditional knowledge, or an aggregation or duplication of known properties of traditionally known components, is not patentable in India.",
+        "citation_ids": [
+          "b7550c35-b6d9-4b61-826a-cd0bdaf0ca74",
+          "8757a5ba-1d71-49f9-9459-a93ef829311d"
+        ],
+        "support_quote": "An invention which in effect, is traditional knowledge or which \nis an aggregation or duplication of known properties of \ntraditionally known component or components is not an \ninvention.",
+        "verification": "quote-and-entailment-check"
+      },
+      {
+        "text": "Inventions relating to Ayush systems can be granted patent protection only if they fulfill the patentability requirements under the Indian Patents Act, such as novelty and inventive step.",
+        "citation_ids": [
+          "1d3422ec-75e0-4d57-aa9c-023fb24077e3",
+          "2f0251e2-d8ba-4840-85a2-9122f3c210aa"
+        ],
+        "support_quote": "the inventions claiming above said scope of research can be granted IP protection \nsubject to fulfilment of the provisions related to patentability under the Patents Act 1970 (as \namended) and corresponding rules as notified thereunder.",
+        "verification": "quote-and-entailment-check"
+      },
+      {
+        "text": "Plant extracts or naturally occurring active ingredients derived from plants are not considered novel or inventive if the use of those plants is already known in the prior art.",
+        "citation_ids": [
+          "2f0251e2-d8ba-4840-85a2-9122f3c210aa"
+        ],
+        "support_quote": "If the claims are for extracts/alkaloids and/or isolated active ingredients \nof plants, which are naturally/inherently present in plants, such claims \ncannot be considered as novel and/or inventive when use of such plants \nis known in prior art.",
+        "verification": "quote-and-entailment-check"
+      }
+    ],
+    "citations": [
+      {
+        "id": "1d3422ec-75e0-4d57-aa9c-023fb24077e3",
+        "source_id": "ayush-guidelines",
+        "version_id": "c20cba47-ed00-4939-9922-7394b0d09404",
+        "title": "Guidelines for Examination of Ayush Related Inventions, 2025",
+        "publisher": "IP India",
+        "url": "https://ipindia.gov.in/",
+        "locator": "1. Introduction",
+        "page": 5,
+        "excerpt": " \n1. Introduction \nAyush is traditional and non -conventional systems of healthcare and healing including \nAyurveda, Siddha, Unani, Sowa-Rigpa, Homoeopathy and Yoga & Naturopathy. The scope of \nthese guidelines covers inventions related to Ayush systems of healthcare and other \ncodified/non codified system of Ayush related invention.  \nIndia is rich in traditional medicinal bio -resources and possesses centuries old associ ated \ntraditional knowledge. The traditional medicinal systems are well established, and further \nundergoing state of the art research resulting in new products/processes. These guidelines \nare intended to provide clarity to the filing and processing of paten t applications claiming \nAyush related inventions. These guidelines are complementary to the already issued \n“Guidelines for processing of patent applications relating to traditional knowledge and \nbiological material” by the Indian Patent Office in 2012 and are more focused on providing \nguidance to Ayush stakeholders regarding filing and examination of patent applications on \nAyush related inventions. \nAyush related inventions include areas such as –  \n Ayush product(s) and Equipment(s) / Device(s)  \n Value added p roducts related to Food recipes/ Nutraceuticals based on Ayush \nsystems  \nThus, the inventions claiming above said scope of research can be granted IP protection \nsubject to fulfilment of the provisions related to patentability under the Patents Act 1970 (as \namended) and corresponding rules as notified thereunder. \n",
+        "authority": "guidance",
+        "jurisdiction": "india",
+        "market": "treaties",
+        "retrieved_at": "2026-09-06T09:11:21.719888",
+        "review_status": "reference_only",
+        "stale": false
+      },
+      {
+        "id": "2f0251e2-d8ba-4840-85a2-9122f3c210aa",
+        "source_id": "ayush-guidelines",
+        "version_id": "c20cba47-ed00-4939-9922-7394b0d09404",
+        "title": "Guidelines for Examination of Ayush Related Inventions, 2025",
+        "publisher": "IP India",
+        "url": "https://ipindia.gov.in/",
+        "locator": "PDF page 9",
+        "page": 9,
+        "excerpt": "Page 5 of 14 \n \n(as amended) and The Patent Rules 2003 (as amended). The Patent office conducts \nprior art search to evaluate the  novelty and inventive step using the Traditional \nKnowledge Digital Library (TKDL) which allows search on Indian Systems of Medicines \nlike Ayurveda, Siddha, Unani and Sowa -Rigpa as well as Yoga and other available \ndatabases. List of some databases to be re ferred for Ayush systems and traditional \nknowledge is given in  Annexure-I.  \n3.4 Guiding principles for assessment of patent applications: \nThe different types of Ayush related inventions that are commonly received by the \nIndian Patent office have been compiled  and the principles that may be adopted for \nevaluation of patentability in different categories have been listed as guiding \nprinciples 1 -6 that are presented below. These are not exhaustive to cover all \npossible scope of inventions related to Ayush but con sidering the fact that each \ninvention being unique, the patentability of each application will depend on the \nindividual merit of the invention examined as per the provisions of the Patent Act \n1970 (as amended) and the Patent Rules 2003 (as amended).   \n \nGuiding \nPrinciple 1 \nIf the claims are for extracts/alkaloids and/or isolated active ingredients \nof plants, which are naturally/inherently present in plants, such claims \ncannot be considered as novel and/or inventive when use of such plants \nis known in prior art. However, processes for obtaining such \nextracts/isolates may be considered patentable, subject to the \nrequirements of patentability. \nWhen the subject-matter of claimed invention is referring to extracts of plant materials as \nproduct claims containing undefined active ingredients, such claims cannot be said to be ",
+        "authority": "guidance",
+        "jurisdiction": "india",
+        "market": "treaties",
+        "retrieved_at": "2026-09-06T09:11:21.719888",
+        "review_status": "reference_only",
+        "stale": false
+      },
+      {
+        "id": "b7550c35-b6d9-4b61-826a-cd0bdaf0ca74",
+        "source_id": "patents-manual",
+        "version_id": "5f6d841d-7c36-4ede-a5fd-4e6915dc23e9",
+        "title": "Manual of Patent Office Practice and Procedure",
+        "publisher": "IP India",
+        "url": "https://ipindia.gov.in/",
+        "locator": "Section 3(o)",
+        "page": 98,
+        "excerpt": "Section 3(o) \n09.03.05.15 An invention which in effect, is traditional knowledge or which \nis an aggregation or duplication of known properties of \ntraditionally known component or components is not an \ninvention. \nTraditional Knowledge, be ing knowledge already existing, is not \npatentable. An example is the antiseptic properties of turmeric for \nwound healing. Another example is the pesticidal and insecticidal \nproperties of neem. \nThe Examiner conducts investigation by using Traditional Knowle dge \n",
+        "authority": "guidance",
+        "jurisdiction": "india",
+        "market": "treaties",
+        "retrieved_at": "2026-09-06T09:11:21.404337",
+        "review_status": "reference_only",
+        "stale": false
+      },
+      {
+        "id": "8757a5ba-1d71-49f9-9459-a93ef829311d",
+        "source_id": "ayush-guidelines",
+        "version_id": "c20cba47-ed00-4939-9922-7394b0d09404",
+        "title": "Guidelines for Examination of Ayush Related Inventions, 2025",
+        "publisher": "IP India",
+        "url": "https://ipindia.gov.in/",
+        "locator": "Section 3(p):  an invention which in effect, is traditional",
+        "page": 7,
+        "excerpt": "Section 3(p):  an invention which in effect, is traditional \nknowledge or which is an aggregation or duplication of known \nproperties of traditionally known component or components.  \n2.2 Additional information related to Biological Diversity Act, 2002 for the \napplicants: \nIn addition to the requirements under the Patents Act, 1970 and the rules thereunder, the \napplicants are also required to abide with the provisions of the Biological Diver sity Act, 2002 \nand rules thereunder for applications for patents for inventions based on biological \nresources, in particular the Section 6 of the Biological Diversity Act, 2002 and the rules \nthereunder. ",
+        "authority": "guidance",
+        "jurisdiction": "india",
+        "market": "treaties",
+        "retrieved_at": "2026-09-06T09:11:21.719888",
+        "review_status": "reference_only",
+        "stale": false
+      }
+    ],
+    "evidence_status": "partial",
+    "evidence_reasons": [
+      "AI synthesis linked to retrieved passages; entailment checked. Source applicability remains unreviewed."
+    ],
+    "limitations": [
+      "Reference-library material has not been approved as current legal guidance. Check amendments and applicability before relying on it.",
+      "This is an AI synthesis of reference documents, not verified current-law guidance. Confirm applicability and amendments."
+    ],
+    "next_steps": [
+      "Open the cited source and check its version.",
+      "Use the formulation or ABS assessment for product-specific routing.",
+      "Export your case or request facilitator review if uncertainty remains."
+    ],
+    "disclaimer": "Information, not legal advice. Classification is provisional. Confirm requirements with the competent authority or a qualified IP facilitator.",
+    "corpus_release": "fa7424d2-0e0f-4304-b1f1-bc60b609ac6f",
+    "translation": null,
+    "stages": [
+      "Scope and privacy check",
+      "LLM search planning",
+      "Jurisdiction-filtered hybrid retrieval",
+      "Evidence-backed graph lookup",
+      "Claim and citation validation"
+    ],
+    "metrics": {
+      "retrieval": "hybrid",
+      "query_count": 3,
+      "matched": 8,
+      "distinct_sources": 3,
+      "embeddings_enabled": true,
+      "embedding_error": null,
+      "graph_edges": 0,
+      "llm_query_planning": true,
+      "elapsed_ms": 78797,
+      "generation_provider": "gemini",
+      "generation_model": "gemini-3.6-flash"
+    }
+  },
+  "mechanical_checks": {
+    "all_citations_resolve": true,
+    "all_support_quotes_are_literal": true,
+    "jurisdiction_isolated": true,
+    "qualified_legal_review": false
+  }
+}

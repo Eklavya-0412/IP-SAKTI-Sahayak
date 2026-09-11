@@ -1,0 +1,30 @@
+[
+  {
+    "origin": "http://localhost:5173",
+    "status": 200,
+    "mode": "abstention",
+    "claims": 0,
+    "citations": 0
+  },
+  {
+    "origin": "http://127.0.0.1:5173",
+    "status": 200,
+    "mode": "abstention",
+    "claims": 0,
+    "citations": 0
+  },
+  {
+    "origin": "http://localhost:8080",
+    "status": 200,
+    "mode": "abstention",
+    "claims": 0,
+    "citations": 0
+  },
+  {
+    "origin": "http://127.0.0.1:8080",
+    "status": 200,
+    "mode": "abstention",
+    "claims": 0,
+    "citations": 0
+  }
+]

@@ -1,0 +1,32 @@
+{
+  "sources": [
+    {
+      "id": "us-botanical",
+      "title": "Botanical Drug Development Guidance for Industry",
+      "url": "https://www.fda.gov/files/drugs/published/Botanical-Drug-Development--Guidance-for-Industry.pdf",
+      "category": "market_access",
+      "authority": "guidance",
+      "jurisdiction": "international",
+      "market": "us",
+      "publisher": "US FDA",
+      "language": "en",
+      "access": "public",
+      "notes": "Guidance document; distinguish enforceable regulations from recommendations.",
+      "local_path": "us-botanical.pdf"
+    },
+    {
+      "id": "biodiversity-act",
+      "title": "Biological Diversity Act, 2002 (amended compilation)",
+      "url": "https://www.wipo.int/wipolex/en/legislation/details/23111",
+      "category": "abs",
+      "authority": "legislation",
+      "jurisdiction": "india",
+      "market": "treaties",
+      "publisher": "WIPO Lex / Government of India",
+      "language": "en",
+      "access": "public",
+      "notes": "Includes 2023 amendments; applicability and commencement require review.",
+      "local_path": "biodiversity-act.pdf"
+    }
+  ]
+}

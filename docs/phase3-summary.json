@@ -1,0 +1,17 @@
+{
+  "backend_tests": {
+    "passed": 81,
+    "failed": 0,
+    "errors": 0
+  },
+  "frontend_build": "passed before workspace switch; frontend unchanged",
+  "frontend_transport_tests": {
+    "passed": 4
+  },
+  "supplied_pdf_documents": 18,
+  "extracted_chunks": 2060,
+  "offline_benchmark": "both source-coverage and jurisdiction-isolation checks passed",
+  "live_supplemental_ingestion": "163 chunks committed in earlier session",
+  "live_supplied_ingestion": "commit unconfirmed; current sandbox blocks Supabase TCP",
+  "live_groq_evidence_validation": "not completed"
+}
