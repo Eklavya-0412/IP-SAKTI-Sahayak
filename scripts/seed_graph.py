@@ -7,8 +7,8 @@ from app.db import SessionLocal
 from app.models import Source,SourceVersion,Chunk,GraphEdge
 from app.corpus import active_release
 TERMS=['traditional knowledge','patent','biological resources','Ayurvedic','registration','international application','benefit sharing','copyright','herbal']
-with SessionLocal() as db:
-    release=active_release(db);created=0
+def seed_graph(db, release=None):
+    release=release or active_release(db);created=0
     if not release:raise SystemExit('Activate a reference release first.')
     for term in TERMS:
         rows=db.execute(select(Chunk,Source).join(SourceVersion,Chunk.version_id==SourceVersion.id).join(Source,SourceVersion.source_id==Source.id)
@@ -18,4 +18,10 @@ with SessionLocal() as db:
             if db.scalar(select(GraphEdge).where(GraphEdge.evidence_chunk_id==chunk.id,GraphEdge.object==term)):continue
             # Verified literal mention only. This does not mean that an obligation is legally reviewed.
             db.add(GraphEdge(subject=source.title[:200],predicate='references',object=term,evidence_chunk_id=chunk.id,reviewed=True));created+=1
-    db.commit();print(f'{created} literal-reference navigation links. No legal obligations inferred.')
+    db.flush()
+    return created
+
+
+if __name__ == '__main__':
+    with SessionLocal.begin() as db:
+        print(f'{seed_graph(db)} literal-reference navigation links. No legal obligations inferred.')

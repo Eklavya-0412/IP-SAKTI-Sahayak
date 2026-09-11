@@ -41,11 +41,16 @@ class Settings(BaseSettings):
             return ROOT / 'corpus' / 'manifest.json'
         return Path(v)
 
-    # ── Generation provider — "groq" | "none" ────────────────────────────────
+    # ── Generation provider — "groq" | "gemini" | "none" ──────────────────
     generation_provider: str = 'groq'
     groq_api_key: str = ''
     groq_model: str = 'llama-3.1-70b-versatile'
+    gemini_api_key: str = ''
+    gemini_model: str = 'gemini-3.6-flash'
+    generation_temperature: float = 0.5
     generation_timeout_seconds: int = 90
+    max_completion_tokens: int = 8192
+    max_context_tokens: int = 30000
 
     # ── Ingestion (LlamaParse) ────────────────────────────────────────────────
     llama_cloud_api_key: str = ''
@@ -77,6 +82,13 @@ class Settings(BaseSettings):
     daily_request_limit: int = 100
     requests_per_minute: int = 20
     source_stale_days: int = 30
+
+    @property
+    def trusted_origins(self) -> list[str]:
+        origins = {self.public_origin.rstrip('/')}
+        if self.app_env == 'development':
+            origins.update(f'http://{host}:{port}' for host in ('localhost', '127.0.0.1') for port in (5173, 8080))
+        return sorted(origins)
 
     def validate_deployment(self):
         if self.app_env == 'production':

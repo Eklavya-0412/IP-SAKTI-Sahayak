@@ -1,0 +1,224 @@
+{
+  "documents": [
+    {
+      "source_id": "patents-act",
+      "file": "patent_act_1970.pdf",
+      "sha256": "94f28c3ed9d6008595ec2a39ff358fd1f504d1dd4f36df12b6bb7046e7e3b2ba",
+      "chunks": 215,
+      "pages": 69,
+      "sparse_pages": [],
+      "ocr_pages": []
+    },
+    {
+      "source_id": "patents-manual",
+      "file": "manual of patent office.pdf",
+      "sha256": "35f8b7db04a38a5e13d4ed69530daca692891e82c3f5a752512e438606d67f22",
+      "chunks": 330,
+      "pages": 174,
+      "sparse_pages": [],
+      "ocr_pages": []
+    },
+    {
+      "source_id": "ayush-guidelines",
+      "file": "guidelines_ayush related inventions.pdf",
+      "sha256": "3645d9d03ffa41a4ce1081a3bfb3d706a111f0ba89eb9fab5d1f5cd1e3a61cc8",
+      "chunks": 34,
+      "pages": 20,
+      "sparse_pages": [],
+      "ocr_pages": []
+    },
+    {
+      "source_id": "pharma-guidelines",
+      "file": "guidelines-pharma.pdf",
+      "sha256": "04ec1671e8df5808870e89f8168f8f827d53c9d0d14ff62b8d418d0d3dd77441",
+      "chunks": 121,
+      "pages": 51,
+      "sparse_pages": [],
+      "ocr_pages": []
+    },
+    {
+      "source_id": "tk-patents",
+      "file": "guidelines for processing patent application.pdf",
+      "sha256": "27c5a84ba53f77324d82dc3373cfe56a7608a1261ce449e618196aa200b58e8d",
+      "chunks": 26,
+      "pages": 10,
+      "sparse_pages": [
+        1
+      ],
+      "ocr_pages": [
+        1
+      ]
+    },
+    {
+      "source_id": "patent-examination",
+      "file": "guideline-search&examination.pdf",
+      "sha256": "dcb1c29bdd9f4d2280ef5399d6677cf1666c1b8a6a280728b31b2ca462c5a059",
+      "chunks": 201,
+      "pages": 115,
+      "sparse_pages": [],
+      "ocr_pages": []
+    },
+    {
+      "source_id": "gi-act",
+      "file": "geog_indiciations 1999.pdf",
+      "sha256": "049515caf90026ce4d4ce34bed2059d2502326f8795f9c1da2afa60fcaff12fc",
+      "chunks": 84,
+      "pages": 37,
+      "sparse_pages": [],
+      "ocr_pages": []
+    },
+    {
+      "source_id": "gi-rules",
+      "file": "geo_indication_rules_2002.pdf",
+      "sha256": "c3bee98021e4cea4b92d898c863483ee7b8e03a583b24eb6c32314211a03abc0",
+      "chunks": 169,
+      "pages": 71,
+      "sparse_pages": [],
+      "ocr_pages": []
+    },
+    {
+      "source_id": "gi-rules-2025",
+      "file": "geo_indication_rules_2025.pdf",
+      "sha256": "64dac64f6408b6c5bdd5ddfdacd09def6dc3b4daf61a59d37edc762edb642e60",
+      "chunks": 17,
+      "pages": 8,
+      "sparse_pages": [],
+      "ocr_pages": []
+    },
+    {
+      "source_id": "gi-manual",
+      "file": "geo_indi_practice_manual.pdf",
+      "sha256": "a37158ab6bda5cd713cab29f600ca8f44815ddf6de090fcb07c817776c3bfec0",
+      "chunks": 75,
+      "pages": 71,
+      "sparse_pages": [],
+      "ocr_pages": []
+    },
+    {
+      "source_id": "gi-logo-draft",
+      "file": "geo_indi_guidelines.pdf",
+      "sha256": "29dbcdef32b3b00e650157ecc468495d6398a49e3bf590d6dc113f539c2ad704",
+      "chunks": 28,
+      "pages": 17,
+      "sparse_pages": [
+        1
+      ],
+      "ocr_pages": [
+        1
+      ]
+    },
+    {
+      "source_id": "trademark-act",
+      "file": "trades_act_1999.pdf",
+      "sha256": "6b1c79ea5c274dd7769755b5080dd7cb71ddd99dd930ec0b981bb564565cd031",
+      "chunks": 163,
+      "pages": 47,
+      "sparse_pages": [],
+      "ocr_pages": []
+    },
+    {
+      "source_id": "trademark-rules",
+      "file": "trades_rules_2017.pdf",
+      "sha256": "86a96f8aad09a0f9e3faf7e09106838f9bc858a325df4ab92122b0222c3d97e5",
+      "chunks": 295,
+      "pages": 97,
+      "sparse_pages": [],
+      "ocr_pages": []
+    },
+    {
+      "source_id": "trademark-notice",
+      "file": "draftmanual_trademark.pdf",
+      "sha256": "0a70b3f81f5abd427a1429197ae0ead7251cf4644e009cc679cb9d159077e722",
+      "chunks": 2,
+      "pages": 1,
+      "sparse_pages": [
+        1
+      ],
+      "ocr_pages": [
+        1
+      ]
+    },
+    {
+      "source_id": "design-rules",
+      "file": "design rules_2001.pdf",
+      "sha256": "38b227a216b6809e2f85a3abeca0fff66351a480f26d3b4f69e7d8d65d9d7496",
+      "chunks": 153,
+      "pages": 98,
+      "sparse_pages": [
+        3,
+        5,
+        7,
+        9,
+        11,
+        13,
+        15,
+        17,
+        19,
+        21,
+        23,
+        25,
+        27,
+        29,
+        31,
+        33,
+        35,
+        36,
+        37,
+        98
+      ],
+      "ocr_pages": [
+        3,
+        5,
+        7,
+        9,
+        11,
+        13,
+        15,
+        17,
+        19,
+        21,
+        23,
+        25,
+        27,
+        29,
+        31,
+        33,
+        35,
+        36,
+        37,
+        98
+      ]
+    },
+    {
+      "source_id": "design-manual",
+      "file": "designmanuak.pdf",
+      "sha256": "40e834b8b9625f3ea2b3bc0fd1ff0bcd56d30a0bee65612d88bfbb9c9782c2f6",
+      "chunks": 137,
+      "pages": 87,
+      "sparse_pages": [],
+      "ocr_pages": []
+    },
+    {
+      "source_id": "patent-form1",
+      "file": "form1-appl for grant of patent.pdf",
+      "sha256": "9222130e09f1d82691eccbedf75e062b05671bfcdc079a5cb3bf4b857ce84dbc",
+      "chunks": 8,
+      "pages": 4,
+      "sparse_pages": [],
+      "ocr_pages": []
+    },
+    {
+      "source_id": "patent-form3",
+      "file": "undertaking form.pdf",
+      "sha256": "288231e266c7d9d54e3738165cceb3187ae0936e73d36c2d2e743fc8bc0e8946",
+      "chunks": 2,
+      "pages": 2,
+      "sparse_pages": [],
+      "ocr_pages": []
+    }
+  ],
+  "mode": "live",
+  "chunks": 2060,
+  "status": "extraction_complete_live_commit_unconfirmed",
+  "committed": false
+}

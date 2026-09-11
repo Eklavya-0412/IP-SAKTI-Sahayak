@@ -1,3 +1,5 @@
+> **Phase 3 update:** Read [PHASE3-VERIFICATION.md](PHASE3-VERIFICATION.md) for current changes, tested results, outstanding live checks, and reproducible commands. Older reports below are historical.
+
 # IP-SAKTI Sahayak
 
 Classification terminology reference: [CDSCO traditional-drugs definitions](https://www.cdsco.gov.in/opencms/opencms/en/Traditional_Drugs/) and [India Code Drugs and Cosmetics Act compilation](https://www.indiacode.nic.in/bitstream/123456789/6800/1/drug_and_conmetic_act_1940.pdf), consulted 6 September 2026 to distinguish the regulatory definition in section 3(h)(i) from patent-grant status. This review does not approve corpus versions or establish amendment completeness.

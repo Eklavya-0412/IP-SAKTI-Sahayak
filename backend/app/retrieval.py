@@ -122,10 +122,27 @@ def retrieve(db, query, jurisdiction, market='treaties', as_of=None, limit=8, ap
         if len(result)>=limit: break
     return result, {'retrieval':'hybrid' if dense else 'lexical','candidates':len(rows),'matched':len(result),'embeddings_enabled':model is not None,'embedding_error':embedding_error}
 
+def local_query_plan(queries, jurisdiction):
+    """Expand botanical patent questions into independent evidence topics.
+
+    These are search terms, not legal conclusions. Scope filters still apply to
+    every search and to graph expansion, including on cyclic retries.
+    """
+    planned=list(dict.fromkeys(queries))
+    # Respect an existing multi-query plan; expand only an unplanned question.
+    context=queries[0].lower() if len(queries)==1 else ''
+    if jurisdiction=='india' and re.search(r'patent|पेटेंट|पेटंट',context) and re.search(r'ayurved|ayush|herbal|botanical|formulation|आयुर्वेद',context):
+        planned.extend([
+            'traditional knowledge invention aggregation duplication known properties Section 3(p)',
+            'biological resources intellectual property invention National Biodiversity Authority approval registration',
+        ])
+    return list(dict.fromkeys(planned))[:4]
+
+
 def retrieve_queries(db, queries, jurisdiction, market='treaties', as_of=None, limit=8):
     """Fuse independent semantic searches, then diversify document evidence."""
     scores={}; candidates={}; runs=[]
-    for query in queries[:4]:
+    for query in local_query_plan(queries,jurisdiction):
         rows,metrics=retrieve(db,query,jurisdiction,market,as_of,limit=12)
         runs.append(metrics)
         for rank,row in enumerate(rows,1):
@@ -133,11 +150,15 @@ def retrieve_queries(db, queries, jurisdiction, market='treaties', as_of=None, l
             scores[key]=scores.get(key,0)+1/(60+rank)
             candidates[key]=row
     ordered=sorted(scores,key=scores.get,reverse=True)
-    chosen=[]; per_source=Counter()
-    for key in ordered:
-        row=candidates[key]
-        if per_source[row[2].id]>=3: continue
-        chosen.append(row);per_source[row[2].id]+=1
+    chosen=[]; per_source=Counter(); selected=set()
+    # Cover distinct relevant documents before spending slots on more pages of
+    # the same manual. Otherwise repeated guidance can crowd out the statute.
+    for cap in (1, 2, 3):
+        for key in ordered:
+            row=candidates[key]
+            if key in selected or per_source[row[2].id]>=cap: continue
+            chosen.append(row); selected.add(key); per_source[row[2].id]+=1
+            if len(chosen)>=limit:break
         if len(chosen)>=limit:break
     return chosen,{'retrieval':'hybrid' if any(r.get('retrieval')=='hybrid' for r in runs) else 'lexical',
                    'query_count':len(runs),'matched':len(chosen),'distinct_sources':len(per_source),

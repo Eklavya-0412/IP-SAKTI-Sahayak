@@ -7,7 +7,7 @@ so the full test suite can run without a live Supabase connection.
 import os
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
-from .config import settings
+from .config import ROOT, settings
 
 
 class Base(DeclarativeBase):
@@ -19,6 +19,9 @@ def _build_engine():
     # set os.environ['DATABASE_URL'] before importing this module are honoured,
     # even though settings() is cached and would otherwise return the default.
     url = os.environ.get('DATABASE_URL') or settings().database_url
+
+    if not url and settings().app_env == 'development':
+        url = f"sqlite:///{(ROOT / 'backend' / 'test.db').as_posix()}"
 
     if not url:
         raise RuntimeError(

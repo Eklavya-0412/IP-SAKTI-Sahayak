@@ -698,15 +698,15 @@
     {
       "id": "biodiversity-act",
       "title": "Biological Diversity Act, 2002 (amended compilation)",
-      "url": "https://www.indiacode.nic.in/bitstream/123456789/2046/4/a2003-18.pdf",
+      "url": "https://www.wipo.int/wipolex/en/legislation/details/23111",
       "category": "abs",
       "authority": "legislation",
       "jurisdiction": "india",
       "market": "treaties",
-      "publisher": "India Code",
+      "publisher": "WIPO Lex / Government of India",
       "language": "en",
       "access": "public",
-      "notes": "Includes 2023 amendments; applicability and commencement require review."
+      "notes": "Includes 2023 amendments; applicability and commencement require review. India Code download returned 404 during integration; WIPO Lex amended compilation used as reference."
     },
     {
       "id": "biodiversity-rules",

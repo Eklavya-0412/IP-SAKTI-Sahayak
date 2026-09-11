@@ -17,3 +17,9 @@ test-results/
 !data/.gitkeep
 .env.*
 !.env.example
+
+.test-tmp*/
+session.cookies
+session.json
+question.json
+frontend/tests/.cache/

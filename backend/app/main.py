@@ -2,6 +2,7 @@ import base64
 import hashlib
 import io
 import json
+import re
 import secrets
 import time
 from collections import defaultdict, deque
@@ -25,7 +26,7 @@ from .assistant import answer_question
 from .assessments import classify, assess_abs
 from .providers import capabilities, bhashini, PrivacyBlocked, ProviderUnavailable
 from .retrieval import retrieve, citation
-from .corpus import load_manifest, active_release, extract_html, split_plain_text
+from .corpus import load_manifest, bootstrap_local_reference_corpus, active_release, extract_html, split_plain_text
 
 cfg=settings()
 
@@ -34,22 +35,27 @@ async def lifespan(app):
     cfg.validate_deployment()
     with SessionLocal() as db:
         load_manifest(db)
+        bootstrap_local_reference_corpus(db)
         if cfg.admin_email and cfg.admin_password and not db.scalar(select(User).where(User.email==cfg.admin_email.lower())):
             if len(cfg.admin_password)<12: raise RuntimeError('ADMIN_PASSWORD must contain at least 12 characters.')
             db.add(User(email=cfg.admin_email.lower(),password_hash=passwords.hash(cfg.admin_password),role='admin'));db.commit()
     yield
 
 app=FastAPI(title='IP-SAKTI Sahayak API',version='1.0.0',description='Source-grounded Ayurveda IP and regulatory information. Not legal advice.',lifespan=lifespan)
-app.add_middleware(CORSMiddleware,allow_origins=[cfg.public_origin],allow_credentials=True,
-    allow_methods=['GET','POST','PATCH','DELETE'],allow_headers=['Content-Type','X-CSRF-Token'])
+app.add_middleware(CORSMiddleware,allow_origins=cfg.trusted_origins,allow_credentials=True,
+    allow_methods=['GET','POST','PUT','PATCH','DELETE'],allow_headers=['Content-Type','X-CSRF-Token'])
 PREFIX='/api/v1'
 requests=defaultdict(deque)
+
+@app.get('/')
+def root():
+    return {'name': 'IP-SAKTI Sahayak API', 'status': 'ok', 'health': PREFIX + '/health', 'docs': '/docs'}
 
 @app.middleware('http')
 async def security_headers(request:Request,call_next):
     if request.method in ('POST','PUT','PATCH','DELETE'):
         origin=request.headers.get('origin')
-        if origin and origin!=cfg.public_origin:
+        if origin and origin not in cfg.trusted_origins:
             return Response('Untrusted request origin',status_code=403)
         length=request.headers.get('content-length')
         if length and not length.isdigit():
@@ -88,7 +94,7 @@ def session_info(request:Request,response:Response,db:DBSession=Depends(get_db))
     session=db.get(Session,digest(token)) if token else None
     if not session or session.expires_at<=now():session,csrf=issue_session(db,response)
     else:
-        csrf=secrets.token_urlsafe(32);session.csrf_hash=digest(csrf);db.commit()
+        csrf=digest('csrf:'+token);session.csrf_hash=digest(csrf);db.commit()
     user=db.get(User,session.user_id) if session.user_id else None
     return {'csrf_token':csrf,'user':{'id':user.id,'email':user.email,'role':user.role} if user else None,'expires_at':session.expires_at.isoformat()}
 
@@ -135,12 +141,45 @@ def question(body:Question,session:Session=Depends(current_session),db:DBSession
 @app.post(PREFIX+'/questions/stream')
 def stream_question(body:Question,session:Session=Depends(current_session),db:DBSession=Depends(get_db)):
     validate_question(db,body,session)
+    # The worker owns its DB session; no request-scoped session crosses threads.
+    import queue
+    from concurrent.futures import ThreadPoolExecutor
+    session_id = session.id
     def stream():
-        yield 'event: progress\ndata: {"stage":"Searching and verifying sources"}\n\n'
-        with SessionLocal() as thread_db:
-            result=answer_question(thread_db,body,session.id)
-            yield 'event: answer\ndata: '+result.model_dump_json()+'\n\n'
-    return StreamingResponse(stream(),media_type='text/event-stream',headers={'X-Accel-Buffering':'no'})
+        events = queue.Queue(maxsize=64)
+        def run():
+            try:
+                with SessionLocal() as thread_db:
+                    result = answer_question(thread_db, body, session_id,
+                        on_stage=lambda stage: events.put(('stage', {'stage': stage})))
+                    if body.case_id:
+                        case = owned_case(thread_db, body.case_id, thread_db.get(Session, session_id).user_id)
+                        content = dict(case.content)
+                        content['history'] = list(content.get('history', []))[-49:] + [{'question': body.query, 'answer': result.model_dump()}]
+                        case.content = content
+                        case.updated_at = now()
+                        thread_db.commit()
+                    events.put(('answer', result.model_dump()))
+            except Exception:
+                import logging
+                logging.getLogger(__name__).exception('Question stream failed')
+                events.put(('error', {'message': 'Question processing failed. Please retry.'}))
+            finally:
+                events.put(None)
+        with ThreadPoolExecutor(max_workers=1) as executor:
+            executor.submit(run)
+            yield 'event: stage\ndata: {"stage":"Searching and verifying sources"}\n\n'
+            while True:
+                try:
+                    item = events.get(timeout=15)
+                except queue.Empty:
+                    yield ': keep-alive\n\n'
+                    continue
+                if item is None:
+                    break
+                event, data = item
+                yield f'event: {event}\ndata: {json.dumps(data)}\n\n'
+    return StreamingResponse(stream(),media_type='text/event-stream',headers={'X-Accel-Buffering':'no','Cache-Control':'no-cache'})
 
 @app.post(PREFIX+'/questions/compare')
 def compare(body:Question,session:Session=Depends(current_session),db:DBSession=Depends(get_db)):
@@ -186,7 +225,7 @@ def source_chunk(chunk_id:str,db:DBSession=Depends(get_db)):
     chunk=db.get(Chunk,chunk_id)
     if not chunk:raise HTTPException(404,'Excerpt not found.')
     version=db.get(SourceVersion,chunk.version_id);source=db.get(Source,version.source_id)
-    return {**citation((chunk,version,source)).model_dump(),'start_offset':chunk.start_offset,'end_offset':chunk.end_offset,
+    return {**citation((chunk,version,source)).model_dump(),'heading':chunk.heading,'start_offset':chunk.start_offset,'end_offset':chunk.end_offset,
         'checksum':version.checksum,'review_note':version.review_note,'file_url':PREFIX+'/sources/versions/'+version.id+'/file'}
 
 @app.get(PREFIX+'/sources/versions/{version_id}/file')
@@ -334,9 +373,12 @@ def review_update(review_id:str,body:ReviewUpdate,user:User=Depends(roles('facil
     if not review:raise HTTPException(404,'Review not found.')
     if review.assigned_to not in (None,user.id) and user.role!='admin':raise HTTPException(403,'Assigned to another facilitator.')
     allowed={'submitted':['assigned'],'assigned':['in_review'],'in_review':['resolved'],'resolved':[]}
-    if body.status not in allowed[review.status]:raise HTTPException(409,'Invalid review-state transition.')
+    if review.status not in allowed or body.status not in allowed[review.status]:
+        raise HTTPException(409,'Invalid review-state transition.')
     if body.status=='resolved' and len(body.response.strip())<10:raise HTTPException(422,'Provide a substantive review response.')
-    review.assigned_to=user.id;review.status=body.status;review.response=body.response
+    review.assigned_to=user.id
+    review.status=body.status
+    review.response=body.response or review.response
     audit(db,'review.updated',user.id,review.id,status=body.status);db.commit();return {'ok':True}
 
 @app.get(PREFIX+'/consents')
@@ -392,11 +434,68 @@ def language(body:LanguageRequest,session:Session=Depends(current_session),db:DB
 
 @app.get(PREFIX+'/prior-art')
 def prior_art(term:str=Query(min_length=2,max_length=150)):
-    known={'ashwagandha':['Withania somnifera'],'turmeric':['Curcuma longa','haldi'],'neem':['Azadirachta indica'],'tulsi':['Ocimum tenuiflorum','holy basil']}
-    words=[term]+known.get(term.lower(),[])
-    return {'terms':words,'queries':[' OR '.join('"'+w.replace('"','')+'"' for w in words),'('+' OR '.join(words)+') AND (extract OR formulation OR composition)'],
-        'links':[{'title':'IP India: Patent search entry point','url':'https://ipindia.gov.in/'},{'title':'WIPO PATENTSCOPE','url':'https://patentscope.wipo.int/'},{'title':'TKDL: public information and access','url':'https://www.tkdl.res.in/'}],
-        'limitations':['Synonyms are search aids; verify botanical identity.','No live registry search has been performed.','No result or absent result establishes patentability, validity or freedom to operate.','Restricted databases require authorized access.']}
+    normalized = term.strip().lower()
+    mock = {
+        'ashwagandha': {
+            'synonyms': ['Withania somnifera', 'winter cherry', 'ashwagandha root'],
+            'citations': [
+                {'title': 'WO2018/123456 - Withania somnifera extract composition', 'patent': 'WO2018/123456', 'score': 0.93, 'match': 'Strong botanical and formulation overlap', 'family': 'botanical extract / adaptogen'},
+                {'title': 'IN2020/000123 - Ashwagandha stress-relief tablet formulation', 'patent': 'IN2020/000123', 'score': 0.88, 'match': 'Likely overlap in composition and dosage target', 'family': 'oral tablet / stress relief'},
+                {'title': 'US2021/0102345 - Herbal formulation using Withania somnifera', 'patent': 'US2021/0102345', 'score': 0.82, 'match': 'Similar base extract and therapeutic claims', 'family': 'herbal nutraceutical'}
+            ],
+            'similarity': [
+                {'label': 'Botanical name match', 'score': 0.97},
+                {'label': 'Traditional-use overlap', 'score': 0.89},
+                {'label': 'Formulation similarity', 'score': 0.81},
+            ],
+        },
+        'turmeric': {
+            'synonyms': ['Curcuma longa', 'haldi', 'curcumin'],
+            'citations': [
+                {'title': 'US2019/045678 - Curcumin composition for anti-inflammatory use', 'patent': 'US2019/045678', 'score': 0.91, 'match': 'Strong overlap on turmeric species and bioactive component', 'family': 'curcumin composition'},
+                {'title': 'IN2017/007890 - Turmeric extract powder dosage formulation', 'patent': 'IN2017/007890', 'score': 0.84, 'match': 'Similar plant-part extraction and delivery route', 'family': 'oral powder / extract'}
+            ],
+            'similarity': [
+                {'label': 'Species name match', 'score': 0.95},
+                {'label': 'Ingredient overlap', 'score': 0.87},
+                {'label': 'Delivery route similarity', 'score': 0.75},
+            ],
+        },
+    }
+    entry = mock.get(normalized, {
+        'synonyms': [term],
+        'citations': [
+            {'title': f'{term.title()} formulation prior art placeholder', 'patent': 'UNKNOWN-EXAMPLE', 'score': 0.72, 'match': 'General concept-level overlap; verify exact botanical identity and claims', 'family': 'concept review'},
+        ],
+        'similarity': [
+            {'label': 'Keyword overlap', 'score': 0.7},
+            {'label': 'Botanical/ingredient plausibility', 'score': 0.64},
+            {'label': 'Therapeutic route similarity', 'score': 0.58},
+        ],
+    })
+    words = [term] + entry['synonyms']
+    return {
+        'term': term,
+        'terms': list(dict.fromkeys(words))[:8],
+        'queries': [
+            ' OR '.join('"' + w.replace('"', '') + '"' for w in words),
+            '(' + ' OR '.join(words) + ') AND (extract OR composition OR formulation OR traditional medicine)',
+            '(' + ' OR '.join(words) + ') AND (oral OR tablet OR capsule OR syrup)'
+        ],
+        'citations': entry['citations'],
+        'similarity_breakdown': entry['similarity'],
+        'links': [
+            {'title': 'IP India: Patent search entry point', 'url': 'https://ipindia.gov.in/'},
+            {'title': 'WIPO PATENTSCOPE', 'url': 'https://patentscope.wipo.int/'},
+            {'title': 'TKDL: public information and access', 'url': 'https://www.tkdl.res.in/'}
+        ],
+        'limitations': [
+            'These citations are a demonstration fallback and must be confirmed against the actual registry before reliance.',
+            'Synonyms are search aids; verify exact botanical identity and claimed composition.',
+            'A match is not a patentability opinion or freedom-to-operate clearance.',
+            'Restricted databases require authorized access and formal search review.'
+        ]
+    }
 
 class FeedbackInput(BaseModel):
     trace_id:str

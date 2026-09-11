@@ -9,12 +9,13 @@ import hashlib
 import ipaddress
 import json
 import re
+import shutil
 import socket
 from pathlib import Path
 from urllib.parse import urlparse, urljoin
 import httpx
 from bs4 import BeautifulSoup
-from sqlalchemy import select, text as sql
+from sqlalchemy import select, text as sql, update
 from .config import ROOT, settings
 from .models import Source, SourceVersion, Chunk, CorpusRelease, now
 
@@ -286,6 +287,66 @@ def load_manifest(db):
                 setattr(source, k, v)
     db.commit()
     return manifest
+
+
+def bootstrap_local_reference_corpus(db):
+    """Load checked-in extraction caches for the SQLite development database."""
+    cfg = settings()
+    if db.bind.dialect.name != 'sqlite' or db.query(Chunk).first() is not None:
+        return {'status': 'skipped'}
+
+    manifest = load_manifest(db)
+    version_ids = []
+    loaded = 0
+    for entry in manifest.get('sources', []):
+        local_path = entry.get('local_path')
+        if not local_path:
+            continue
+        source_path = (ROOT / local_path).resolve()
+        if not source_path.is_file() or not source_path.is_relative_to((ROOT / 'Resources').resolve()):
+            continue
+        checksum = hashlib.sha256(source_path.read_bytes()).hexdigest()
+        cache_path = cfg.storage_dir / 'extractions' / f'{checksum}-chunks-v1.json'
+        if not cache_path.is_file():
+            continue
+        source = db.get(Source, entry['id'])
+        version = db.scalar(select(SourceVersion).where(
+            SourceVersion.source_id == source.id,
+            SourceVersion.checksum == checksum,
+        ))
+        if version is None:
+            snapshot = cfg.storage_dir / 'snapshots' / source.id / f'{checksum}.pdf'
+            snapshot.parent.mkdir(parents=True, exist_ok=True)
+            if not snapshot.exists():
+                shutil.copyfile(source_path, snapshot)
+            cached = json.loads(cache_path.read_text(encoding='utf-8'))
+            version = SourceVersion(
+                source_id=source.id,
+                checksum=checksum,
+                path=str(snapshot.resolve()),
+                review_status='reference_only',
+                review_note='Local cached extraction for development. No expert legal approval recorded.',
+                quality=cached.get('quality', {}),
+            )
+            db.add(version)
+            db.flush()
+            db.add_all(Chunk(version_id=version.id, **chunk) for chunk in cached['chunks'])
+            source.checked_at = now()
+            source.disposition = 'review_required'
+            loaded += 1
+        version_ids.append(version.id)
+
+    if not version_ids:
+        return {'status': 'empty'}
+    db.execute(update(CorpusRelease).where(CorpusRelease.active == True).values(active=False))
+    db.add(CorpusRelease(
+        name='Local cached reference library',
+        version_ids=version_ids,
+        active=True,
+        review_note='Development bootstrap only. Sources are reference_only pending curator review.',
+    ))
+    db.commit()
+    return {'status': 'loaded', 'sources': loaded}
 
 # ── Ingest ────────────────────────────────────────────────────────────────────
 

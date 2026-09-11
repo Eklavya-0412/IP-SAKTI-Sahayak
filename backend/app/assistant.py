@@ -24,7 +24,7 @@ Key differences from the old linear graph:
 - triage_agent: Uses Groq to classify intent and validate jurisdiction before retrieval.
   Blocks immediately (no LLM call wasted) if the query is unsafe/clinical/off-domain.
 - retrieve_agent: Tracks retry_count. On the second pass it expands the query via
-  LLM query-planning and broadens the jurisdiction filter to 'treaties'.
+  LLM query-planning while preserving jurisdiction and market.
 - compose_agent: If 0 verified claims come back AND retry_count < max_retries, it
   signals a retrieval retry instead of emitting a no-answer response.
 - translate_agent: Unchanged logic from the original.
@@ -189,8 +189,7 @@ def retrieve_agent(state: State) -> dict:
 
     On the first pass (retry_count == 0) it uses the raw question queries.
     On subsequent passes it uses LLM query-planning (via Groq) to expand the
-    search space, and falls back to the broader 'treaties' market if the
-    specific market returned nothing.
+    search terms while retaining the selected jurisdiction and market.
     """
     if state.get('blocked'):
         return {}
@@ -218,11 +217,10 @@ def retrieve_agent(state: State) -> dict:
     elif q.previous_questions:
         queries.append(q.previous_questions[-1] + ' ' + q.query)
 
-    # On retry: broaden market to 'treaties' if original market returned nothing
+    # Retries expand search terms without crossing the selected corpus scope.
     market = q.market
     if retry_count > 0 and not state.get('rows'):
-        market = 'treaties'
-        stages.append(f'Retry {retry_count}: broadened market to treaties')
+        stages.append(f'Retry {retry_count}: searching within {q.jurisdiction}/{market}')
 
     rows, metrics = retrieve_queries(state['db'], queries, q.jurisdiction, market, q.as_of)
     rows, edges = expand_graph(state['db'], rows, q.jurisdiction, market, q.as_of)
@@ -453,12 +451,12 @@ workflow = builder.compile()
 # Public entry point
 # ---------------------------------------------------------------------------
 
-def answer_question(db, q: Question, session_id=None) -> Answer:
+def answer_question(db, q: Question, session_id=None, on_stage=None) -> Answer:
     start = time.perf_counter()
-    state = workflow.invoke(
-        {'question': q, 'db': db},
-        {'recursion_limit': 12},  # higher limit allows up to 2 retry cycles
-    )
+    state = {}
+    for state in workflow.stream({'question': q, 'db': db}, {'recursion_limit': 12}, stream_mode='values'):
+        if on_stage and state.get('stages'):
+            on_stage(state['stages'][-1])
     release = active_release(db)
     trace_id = uid()
 
@@ -493,12 +491,17 @@ def answer_question(db, q: Question, session_id=None) -> Answer:
         )
 
     cfg = settings()
-    model_name = cfg.groq_model if cfg.generation_provider == 'groq' else None
+    model_name = (
+        cfg.groq_model if cfg.generation_provider == 'groq' else
+        cfg.gemini_model if cfg.generation_provider == 'gemini' else
+        None
+    )
     metrics = {
         **state.get('metrics', {}),
         'elapsed_ms': round((time.perf_counter() - start) * 1000),
         'generation_provider': cfg.generation_provider,
         'generation_model': model_name,
+        'generation_temperature': cfg.generation_temperature,
         'retrieval_retries': state.get('retry_count', 0),
     }
 

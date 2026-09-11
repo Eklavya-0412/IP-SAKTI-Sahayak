@@ -18,7 +18,8 @@ def audit(db, action, actor=None, resource=None, **details):
     db.add(AuditEvent(action=action, actor_id=actor, resource_id=resource, details=details))
 
 def issue_session(db, response: Response, user_id=None):
-    token, csrf = secrets.token_urlsafe(40), secrets.token_urlsafe(32)
+    token = secrets.token_urlsafe(40)
+    csrf = digest('csrf:'+token)
     hours = 168 if user_id else settings().guest_retention_hours
     session = Session(id=digest(token), user_id=user_id, csrf_hash=digest(csrf), expires_at=now()+timedelta(hours=hours))
     db.add(session)

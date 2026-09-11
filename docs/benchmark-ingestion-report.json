@@ -1,0 +1,31 @@
+{
+  "documents": [
+    {
+      "source_id": "us-botanical",
+      "file": "us-botanical.pdf",
+      "sha256": "092c67ceb8b6782e0c0bb553940d551d2a622f353d497e272c38529ee18d7877",
+      "chunks": 89,
+      "pages": 34,
+      "sparse_pages": [],
+      "ocr_pages": []
+    },
+    {
+      "source_id": "biodiversity-act",
+      "file": "biodiversity-act.pdf",
+      "sha256": "341646b54ec22f0ff04878abc00d8e0fcd9209e4236618ab6a3a16356e88dc9b",
+      "chunks": 74,
+      "pages": 25,
+      "sparse_pages": [],
+      "ocr_pages": []
+    }
+  ],
+  "mode": "live",
+  "chunks": 163,
+  "release_id": "a5a565fe-7167-406d-9ccb-fcfbadded9cd",
+  "version_ids": [
+    "24a00d8f-6f5a-450c-8edb-1a09d335a83b",
+    "2af57ad6-83a7-44dd-9592-3ca902fa9799"
+  ],
+  "graph_edges_created": 19,
+  "active": true
+}
