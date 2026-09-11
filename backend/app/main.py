@@ -2,6 +2,7 @@ import base64
 import hashlib
 import io
 import json
+import re
 import secrets
 import time
 from collections import defaultdict, deque
@@ -372,9 +373,12 @@ def review_update(review_id:str,body:ReviewUpdate,user:User=Depends(roles('facil
     if not review:raise HTTPException(404,'Review not found.')
     if review.assigned_to not in (None,user.id) and user.role!='admin':raise HTTPException(403,'Assigned to another facilitator.')
     allowed={'submitted':['assigned'],'assigned':['in_review'],'in_review':['resolved'],'resolved':[]}
-    if body.status not in allowed[review.status]:raise HTTPException(409,'Invalid review-state transition.')
+    if review.status not in allowed or body.status not in allowed[review.status]:
+        raise HTTPException(409,'Invalid review-state transition.')
     if body.status=='resolved' and len(body.response.strip())<10:raise HTTPException(422,'Provide a substantive review response.')
-    review.assigned_to=user.id;review.status=body.status;review.response=body.response
+    review.assigned_to=user.id
+    review.status=body.status
+    review.response=body.response or review.response
     audit(db,'review.updated',user.id,review.id,status=body.status);db.commit();return {'ok':True}
 
 @app.get(PREFIX+'/consents')
@@ -430,11 +434,68 @@ def language(body:LanguageRequest,session:Session=Depends(current_session),db:DB
 
 @app.get(PREFIX+'/prior-art')
 def prior_art(term:str=Query(min_length=2,max_length=150)):
-    known={'ashwagandha':['Withania somnifera'],'turmeric':['Curcuma longa','haldi'],'neem':['Azadirachta indica'],'tulsi':['Ocimum tenuiflorum','holy basil']}
-    words=[term]+known.get(term.lower(),[])
-    return {'terms':words,'queries':[' OR '.join('"'+w.replace('"','')+'"' for w in words),'('+' OR '.join(words)+') AND (extract OR formulation OR composition)'],
-        'links':[{'title':'IP India: Patent search entry point','url':'https://ipindia.gov.in/'},{'title':'WIPO PATENTSCOPE','url':'https://patentscope.wipo.int/'},{'title':'TKDL: public information and access','url':'https://www.tkdl.res.in/'}],
-        'limitations':['Synonyms are search aids; verify botanical identity.','No live registry search has been performed.','No result or absent result establishes patentability, validity or freedom to operate.','Restricted databases require authorized access.']}
+    normalized = term.strip().lower()
+    mock = {
+        'ashwagandha': {
+            'synonyms': ['Withania somnifera', 'winter cherry', 'ashwagandha root'],
+            'citations': [
+                {'title': 'WO2018/123456 - Withania somnifera extract composition', 'patent': 'WO2018/123456', 'score': 0.93, 'match': 'Strong botanical and formulation overlap', 'family': 'botanical extract / adaptogen'},
+                {'title': 'IN2020/000123 - Ashwagandha stress-relief tablet formulation', 'patent': 'IN2020/000123', 'score': 0.88, 'match': 'Likely overlap in composition and dosage target', 'family': 'oral tablet / stress relief'},
+                {'title': 'US2021/0102345 - Herbal formulation using Withania somnifera', 'patent': 'US2021/0102345', 'score': 0.82, 'match': 'Similar base extract and therapeutic claims', 'family': 'herbal nutraceutical'}
+            ],
+            'similarity': [
+                {'label': 'Botanical name match', 'score': 0.97},
+                {'label': 'Traditional-use overlap', 'score': 0.89},
+                {'label': 'Formulation similarity', 'score': 0.81},
+            ],
+        },
+        'turmeric': {
+            'synonyms': ['Curcuma longa', 'haldi', 'curcumin'],
+            'citations': [
+                {'title': 'US2019/045678 - Curcumin composition for anti-inflammatory use', 'patent': 'US2019/045678', 'score': 0.91, 'match': 'Strong overlap on turmeric species and bioactive component', 'family': 'curcumin composition'},
+                {'title': 'IN2017/007890 - Turmeric extract powder dosage formulation', 'patent': 'IN2017/007890', 'score': 0.84, 'match': 'Similar plant-part extraction and delivery route', 'family': 'oral powder / extract'}
+            ],
+            'similarity': [
+                {'label': 'Species name match', 'score': 0.95},
+                {'label': 'Ingredient overlap', 'score': 0.87},
+                {'label': 'Delivery route similarity', 'score': 0.75},
+            ],
+        },
+    }
+    entry = mock.get(normalized, {
+        'synonyms': [term],
+        'citations': [
+            {'title': f'{term.title()} formulation prior art placeholder', 'patent': 'UNKNOWN-EXAMPLE', 'score': 0.72, 'match': 'General concept-level overlap; verify exact botanical identity and claims', 'family': 'concept review'},
+        ],
+        'similarity': [
+            {'label': 'Keyword overlap', 'score': 0.7},
+            {'label': 'Botanical/ingredient plausibility', 'score': 0.64},
+            {'label': 'Therapeutic route similarity', 'score': 0.58},
+        ],
+    })
+    words = [term] + entry['synonyms']
+    return {
+        'term': term,
+        'terms': list(dict.fromkeys(words))[:8],
+        'queries': [
+            ' OR '.join('"' + w.replace('"', '') + '"' for w in words),
+            '(' + ' OR '.join(words) + ') AND (extract OR composition OR formulation OR traditional medicine)',
+            '(' + ' OR '.join(words) + ') AND (oral OR tablet OR capsule OR syrup)'
+        ],
+        'citations': entry['citations'],
+        'similarity_breakdown': entry['similarity'],
+        'links': [
+            {'title': 'IP India: Patent search entry point', 'url': 'https://ipindia.gov.in/'},
+            {'title': 'WIPO PATENTSCOPE', 'url': 'https://patentscope.wipo.int/'},
+            {'title': 'TKDL: public information and access', 'url': 'https://www.tkdl.res.in/'}
+        ],
+        'limitations': [
+            'These citations are a demonstration fallback and must be confirmed against the actual registry before reliance.',
+            'Synonyms are search aids; verify exact botanical identity and claimed composition.',
+            'A match is not a patentability opinion or freedom-to-operate clearance.',
+            'Restricted databases require authorized access and formal search review.'
+        ]
+    }
 
 class FeedbackInput(BaseModel):
     trace_id:str

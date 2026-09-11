@@ -41,11 +41,16 @@ class Settings(BaseSettings):
             return ROOT / 'corpus' / 'manifest.json'
         return Path(v)
 
-    # ── Generation provider — "groq" | "none" ────────────────────────────────
+    # ── Generation provider — "groq" | "gemini" | "none" ──────────────────
     generation_provider: str = 'groq'
     groq_api_key: str = ''
     groq_model: str = 'llama-3.1-70b-versatile'
+    gemini_api_key: str = ''
+    gemini_model: str = 'gemini-3.6-flash'
+    generation_temperature: float = 0.5
     generation_timeout_seconds: int = 90
+    max_completion_tokens: int = 8192
+    max_context_tokens: int = 30000
 
     # ── Ingestion (LlamaParse) ────────────────────────────────────────────────
     llama_cloud_api_key: str = ''

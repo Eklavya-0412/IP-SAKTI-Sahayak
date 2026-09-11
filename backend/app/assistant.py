@@ -491,12 +491,17 @@ def answer_question(db, q: Question, session_id=None, on_stage=None) -> Answer:
         )
 
     cfg = settings()
-    model_name = cfg.groq_model if cfg.generation_provider == 'groq' else None
+    model_name = (
+        cfg.groq_model if cfg.generation_provider == 'groq' else
+        cfg.gemini_model if cfg.generation_provider == 'gemini' else
+        None
+    )
     metrics = {
         **state.get('metrics', {}),
         'elapsed_ms': round((time.perf_counter() - start) * 1000),
         'generation_provider': cfg.generation_provider,
         'generation_model': model_name,
+        'generation_temperature': cfg.generation_temperature,
         'retrieval_retries': state.get('retry_count', 0),
     }
 
