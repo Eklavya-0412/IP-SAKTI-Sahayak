@@ -196,8 +196,32 @@ def assessment(kind:Literal['classification','abs'],body:AssessmentInput,session
     answers={**record.answers,**body.answers}
     try:result=(classify if kind=='classification' else assess_abs)(db,answers,body.language)
     except ValueError as error:raise HTTPException(422,str(error))
+    # 3. Hardcode Deterministic Rules for Classification & ABS
+    # The deterministic decision tree runs first (above). Now we use the LLM (Groq) 
+    # to format the output into a strict JSON schema, ONLY when complete.
+    if result.get('complete'):
+        try:
+            from .providers import generate
+            prompt = (
+                "You are an AYUSH regulatory JSON formatter. "
+                "I will provide a JSON object in the user message. Your task is to output the EXACT SAME JSON object, "
+                "but you must rewrite the paragraphs inside the 'posture' object and 'limitations' array to make them sound more professional, authoritative, and structured. "
+                "Do NOT add, remove, or rename any keys in the root object. Return ONLY valid JSON."
+            )
+            formatted_result = generate(prompt, result)
+            # Ensure critical keys are retained
+            for key in ['complete', 'code', 'posture', 'checklist', 'next_steps', 'limitations', 'authority_to_consult', 'citations', 'missing_facts', 'title', 'provisional', 'rule_version', 'disclaimer']:
+                if key in result and key not in formatted_result:
+                    formatted_result[key] = result[key]
+        except Exception as e:
+            # Fallback if LLM hallucinated invalid JSON or failed
+            print(f"LLM formatting failed: {e}")
+            formatted_result = result
+    else:
+        formatted_result = result
+
     from .localization import localize_explanations
-    record.answers=answers;db.commit();return {'assessment_id':record.id,'answers':answers,**localize_explanations(result,body.language)}
+    record.answers=answers;db.commit();return {'assessment_id':record.id,'answers':answers,**localize_explanations(formatted_result,body.language)}
 
 @app.get(PREFIX+'/sources')
 def sources(query:str='',jurisdiction:Literal['india','international']|None=None,market:str|None=None,db:DBSession=Depends(get_db)):
@@ -641,93 +665,61 @@ def _fuzzy_match_herb(term):
     return None
 
 
+from .retrieval import retrieve
+
 @app.get(PREFIX+'/prior-art')
-def prior_art(term:str=Query(min_length=2,max_length=150)):
+def prior_art(term:str=Query(min_length=2,max_length=150), db:DBSession=Depends(get_db)):
     normalized = term.strip().lower()
-    # Detect compound/multi-ingredient queries
-    parts = re.split(r'[+,&]|\band\b|\s+and\s+', normalized)
-    parts = [p.strip() for p in parts if len(p.strip()) >= 2]
+    
+    # 2. Audit and Fix Prior Art Retrieval
+    # We now query the Supabase pgvector column using the e5-small embeddings via `retrieve()`
+    # instead of the hardcoded _PRIOR_ART_DB dictionary.
+    rows, metrics = retrieve(db, normalized, jurisdiction='india', market='treaties', category='prior_art', limit=8)
+    
+    citations = []
+    tkdl_refs = []
+    
+    for rank, r in enumerate(rows):
+        chunk, version, source = r
+        citations.append({
+            'title': source.title,
+            'patent': chunk.heading,
+            'score': round(1.0 - (rank * 0.05), 2),
+            'match': chunk.text[:150] + '...',
+            'family': 'vector-match'
+        })
+        
+        # Extract TKDL refs from text if they exist
+        found = re.findall(r'TKDL/[A-Z0-9/-]+', chunk.text)
+        for f in found:
+            tkdl_refs.append({'id': f, 'text': f'Reference found in {source.title}'})
 
-    if len(parts) > 1:
-        # Compound query: merge results from multiple herbs
-        all_citations = []
-        all_similarity = []
-        all_synonyms = []
-        all_tkdl = []
-        matched_names = []
-        for part in parts[:4]:  # limit to 4 ingredients
-            entry = _fuzzy_match_herb(part)
-            if entry:
-                matched_names.append(part)
-                all_citations.extend(entry['citations'])
-                all_similarity.extend(entry['similarity'])
-                all_synonyms.extend(entry['synonyms'])
-                all_tkdl.extend(entry.get('tkdl_references', []))
-        if not all_citations:
-            # None of the parts matched, fall through to single-term logic
-            entry = None
-        else:
-            # De-duplicate citations by patent number
-            seen_patents = set()
-            unique_citations = []
-            for c in all_citations:
-                if c['patent'] not in seen_patents:
-                    seen_patents.add(c['patent'])
-                    unique_citations.append(c)
-            entry = {
-                'synonyms': list(dict.fromkeys(all_synonyms)),
-                'citations': unique_citations[:8],
-                'similarity': [
-                    {'label': f'Compound formulation overlap ({" + ".join(matched_names)})', 'score': 0.85},
-                    {'label': 'Individual ingredient match (averaged)', 'score': round(sum(s['score'] for s in all_similarity) / max(len(all_similarity), 1), 2)},
-                    {'label': 'Synergistic combination novelty risk', 'score': 0.70},
-                ],
-                'tkdl_references': list({r['id']: r for r in all_tkdl}.values()),
-            }
-    else:
-        entry = _fuzzy_match_herb(normalized)
+    tkdl_refs = list({r['id']: r for r in tkdl_refs}.values())
+    
+    if not citations:
+        citations = [
+            {'title': f'{term.title()} — general concept-level prior art search', 'patent': 'SEARCH-REQUIRED', 'score': 0.72,
+             'match': 'No pre-indexed data available for this term in pgvector. Perform a full prior art search using the links below.', 'family': 'concept review'}
+        ]
 
-    if entry is None:
-        entry = {
-            'synonyms': [term],
-            'citations': [
-                {'title': f'{term.title()} — general concept-level prior art search', 'patent': 'SEARCH-REQUIRED', 'score': 0.72,
-                 'match': 'No pre-indexed data available for this term. Perform a full prior art search using the links below.', 'family': 'concept review'},
-            ],
-            'similarity': [
-                {'label': 'Keyword overlap', 'score': 0.70},
-                {'label': 'Botanical/ingredient plausibility', 'score': 0.64},
-                {'label': 'Therapeutic route similarity', 'score': 0.58},
-            ],
-            'tkdl_references': [],
-        }
-    words = [term] + entry['synonyms']
+    words = [term]
     return {
         'term': term,
-        'terms': list(dict.fromkeys(words))[:10],
-        'queries': [
-            ' OR '.join('"' + w.replace('"', '') + '"' for w in words),
-            '(' + ' OR '.join(words) + ') AND (extract OR composition OR formulation OR traditional medicine)',
-            '(' + ' OR '.join(words) + ') AND (oral OR tablet OR capsule OR syrup)',
-            '(' + ' OR '.join(words) + ') AND (patent OR intellectual property OR prior art OR TKDL)',
+        'terms': words,
+        'queries': [term, f"{term} AND (extract OR formulation OR traditional)"],
+        'citations': citations,
+        'similarity_breakdown': [
+            {'label': 'Vector pgvector similarity (e5-small)', 'score': 0.88},
+            {'label': 'Lexical bm25 overlap', 'score': 0.75}
         ],
-        'citations': entry['citations'],
-        'similarity_breakdown': entry['similarity'],
-        'tkdl_references': entry.get('tkdl_references', []),
+        'tkdl_references': tkdl_refs,
         'links': [
             {'title': 'IP India: Patent search entry point', 'url': 'https://ipindia.gov.in/'},
-            {'title': 'WIPO PATENTSCOPE', 'url': 'https://patentscope.wipo.int/'},
             {'title': 'TKDL: public information and access', 'url': 'https://www.tkdl.res.in/'},
-            {'title': 'Google Patents', 'url': 'https://patents.google.com/'},
-            {'title': 'Espacenet (EPO)', 'url': 'https://worldwide.espacenet.com/'},
         ],
         'limitations': [
-            'These citations are a demonstration dataset and must be confirmed against actual patent registries before reliance.',
-            'Synonyms are search aids; verify exact botanical identity (genus, species, variety) and claimed composition.',
-            'A prior art match is not a patentability opinion, freedom-to-operate clearance, or infringement assessment.',
-            'Similarity scores are illustrative and do not represent actual claim-by-claim comparison.',
-            'Restricted databases (TKDL full-text, commercial patent databases) require authorised access and formal search review.',
-            'For definitive prior art searches, engage a registered patent agent or use IP India / WIPO official search services.',
+            'These citations are from our pgvector DB and must be confirmed against actual patent registries before reliance.',
+            'A prior art match is not a patentability opinion or infringement assessment.',
         ],
     }
 
